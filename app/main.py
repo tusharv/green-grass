@@ -1,0 +1,342 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, Response
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
+
+from app.auth import (
+    check_password,
+    csrf_token,
+    current_user,
+    hash_password,
+    label_from_filename,
+    normalize_email,
+    require_csrf,
+    require_user,
+    user_by_email,
+    verify_password,
+)
+from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
+from app.database import Base, make_engine, make_session_factory
+from app.models import Application, CV, User
+from app.schemas import CvDocument, GapReport, Profile
+from app.services.llm import ModelError, OllamaCloudClient
+from app.services.parser import UploadError, extract_text
+from app.services.pdf import render_pdf
+from app.services.pipeline import analyze_role, build_profile
+
+DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+
+class Credentials(BaseModel):
+    email: str
+    password: str
+
+
+class ApplyBody(BaseModel):
+    cv_id: int
+    role_title: str = Field(min_length=1, max_length=200)
+    job_description: str = Field(min_length=1)
+
+
+def create_app(settings: Settings | None = None, model=None) -> FastAPI:
+    settings = settings or load_settings()
+    ensure_sqlite_parent(settings.database_url)
+    engine = make_engine(settings.database_url)
+    Base.metadata.create_all(engine)
+    session_factory = make_session_factory(engine)
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        Base.metadata.create_all(engine)
+        yield
+
+    app = FastAPI(title="Green Grass", lifespan=lifespan)
+    app.state.settings = settings
+    app.state.engine = engine
+    app.state.Session = session_factory
+    app.state.model = model
+
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.session_secret,
+        session_cookie="gg_session",
+        max_age=60 * 60 * 24 * 14,
+        same_site="lax",
+        https_only=settings.cookie_secure,
+    )
+
+    def get_db():
+        db = session_factory()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    def model_client():
+        if app.state.model is not None:
+            return app.state.model
+        if not settings.ollama_api_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Add OLLAMA_API_KEY before checking a role.",
+            )
+        return OllamaCloudClient(
+            api_key=settings.ollama_api_key,
+            model=settings.ollama_model,
+            host=settings.ollama_host,
+        )
+
+    def owned_cv(db: Session, user: User, cv_id: int) -> CV:
+        cv = db.get(CV, cv_id)
+        if cv is None or cv.user_id != user.id:
+            raise HTTPException(status_code=404, detail="That CV was not found.")
+        return cv
+
+    def owned_application(db: Session, user: User, application_id: int) -> Application:
+        row = db.get(Application, application_id)
+        if row is None or row.user_id != user.id:
+            raise HTTPException(status_code=404, detail="That check was not found.")
+        return row
+
+    @app.get("/health")
+    def health():
+        return {"ok": True}
+
+    @app.get("/api/session")
+    def session(request: Request, db: Session = Depends(get_db)):
+        user = current_user(request, db)
+        return {
+            "csrf": csrf_token(request),
+            "user": None if user is None else {"id": user.id, "email": user.email},
+        }
+
+    @app.post("/api/register", status_code=201)
+    def register(body: Credentials, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        email = normalize_email(body.email)
+        password = check_password(body.password)
+        if user_by_email(db, email) is not None:
+            raise HTTPException(status_code=409, detail="That email is already registered.")
+        user = User(email=email, password_hash=hash_password(password))
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        request.session["user_id"] = user.id
+        return {"id": user.id, "email": user.email}
+
+    @app.post("/api/login")
+    def login(body: Credentials, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        email = normalize_email(body.email)
+        user = user_by_email(db, email)
+        if user is None or not verify_password(body.password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Email or password does not match.")
+        request.session["user_id"] = user.id
+        return {"id": user.id, "email": user.email}
+
+    @app.post("/api/logout")
+    def logout(request: Request):
+        require_csrf(request)
+        request.session.clear()
+        csrf_token(request)
+        return {"ok": True}
+
+    @app.get("/api/cvs")
+    def list_cvs(request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        rows = (
+            db.query(CV)
+            .filter(CV.user_id == user.id)
+            .order_by(CV.created_at.desc())
+            .all()
+        )
+        return [_cv_summary(row) for row in rows]
+
+    @app.post("/api/cvs", status_code=201)
+    async def upload_cv(
+        request: Request,
+        file: UploadFile = File(...),
+        db: Session = Depends(get_db),
+    ):
+        require_csrf(request)
+        user = require_user(request, db)
+        data = await _read_upload(file, settings.max_upload_bytes)
+        try:
+            text = extract_text(file.filename or "", data, settings.max_upload_bytes)
+            profile = build_profile(model_client(), text)
+        except UploadError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ModelError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        if not profile.contact.name:
+            profile.contact.name = label_from_filename(file.filename or "CV")
+        row = CV(
+            user_id=user.id,
+            label=label_from_filename(file.filename or "CV"),
+            source_filename=(file.filename or "cv")[:255],
+            extracted_text=text,
+            profile_json=profile.model_dump(),
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return _cv_detail(row)
+
+    @app.get("/api/cvs/{cv_id}")
+    def get_cv(cv_id: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        return _cv_detail(owned_cv(db, user, cv_id))
+
+    @app.get("/api/applications")
+    def list_applications(request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        rows = (
+            db.query(Application)
+            .filter(Application.user_id == user.id)
+            .order_by(Application.created_at.desc())
+            .all()
+        )
+        return [_application_summary(row) for row in rows]
+
+    @app.post("/api/applications", status_code=201)
+    def create_application(body: ApplyBody, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        role = body.role_title.strip()
+        description = body.job_description.strip()
+        if not role:
+            raise HTTPException(status_code=400, detail="Enter the role title.")
+        if not description:
+            raise HTTPException(status_code=400, detail="Paste the job description.")
+        if len(description) > MAX_JOB_CHARS:
+            raise HTTPException(status_code=400, detail="That job description is too long. Shorten it and try again.")
+        cv = owned_cv(db, user, body.cv_id)
+        profile = Profile.model_validate(cv.profile_json)
+        try:
+            fit, result = analyze_role(model_client(), profile, role, description)
+        except ModelError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if isinstance(result, CvDocument):
+            payload = {"kind": "cv", "document": result.model_dump()}
+        elif isinstance(result, GapReport):
+            payload = {"kind": "gap", "report": result.model_dump()}
+        else:
+            raise HTTPException(status_code=500, detail="The check did not finish.")
+        row = Application(
+            user_id=user.id,
+            cv_id=cv.id,
+            role_title=role,
+            job_description=description,
+            fit_score=fit.score,
+            suitable=fit.suitable,
+            skill_board_json=fit.model_dump(),
+            result_json=payload,
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return _application_detail(row)
+
+    @app.get("/api/applications/{application_id}")
+    def get_application(application_id: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        return _application_detail(owned_application(db, user, application_id))
+
+    @app.get("/api/applications/{application_id}/pdf")
+    def application_pdf(application_id: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        if not row.suitable or row.result_json.get("kind") != "cv":
+            raise HTTPException(status_code=404, detail="A PDF is available when the CV is ready to send.")
+        document = CvDocument.model_validate(row.result_json["document"])
+        try:
+            pdf = render_pdf(document)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        filename = _pdf_filename(row.role_title)
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @app.get("/")
+    @app.get("/{full_path:path}")
+    def spa(full_path: str = ""):
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="Not found.")
+        if full_path:
+            candidate = (DIST / full_path).resolve()
+            if DIST.resolve() in candidate.parents and candidate.is_file():
+                return FileResponse(candidate)
+        index = DIST / "index.html"
+        if index.is_file():
+            return FileResponse(index)
+        return JSONResponse(
+            {"detail": "The Svelte app is not built yet. From frontend/, run npm install and npm run build."},
+            status_code=503,
+        )
+
+    return app
+
+
+def _cv_summary(row: CV) -> dict:
+    profile = row.profile_json or {}
+    contact = profile.get("contact") or {}
+    return {
+        "id": row.id,
+        "label": row.label,
+        "name": contact.get("name") or row.label,
+        "created_at": row.created_at.isoformat(),
+    }
+
+
+def _cv_detail(row: CV) -> dict:
+    versions = sorted(row.applications, key=lambda item: item.created_at, reverse=True)
+    return {**_cv_summary(row), "profile": row.profile_json, "versions": [_application_summary(item) for item in versions]}
+
+
+def _application_summary(row: Application) -> dict:
+    return {
+        "id": row.id,
+        "cv_id": row.cv_id,
+        "role_title": row.role_title,
+        "fit_score": row.fit_score,
+        "suitable": row.suitable,
+        "created_at": row.created_at.isoformat(),
+    }
+
+
+def _application_detail(row: Application) -> dict:
+    return {
+        **_application_summary(row),
+        "skill_board": row.skill_board_json,
+        "result": row.result_json,
+    }
+
+
+async def _read_upload(file: UploadFile, max_bytes: int) -> bytes:
+    chunks: list[bytes] = []
+    size = 0
+    while True:
+        chunk = await file.read(1024 * 1024)
+        if not chunk:
+            break
+        size += len(chunk)
+        if size > max_bytes:
+            raise HTTPException(status_code=400, detail="This file is larger than 5 MB.")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _pdf_filename(role_title: str) -> str:
+    slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in role_title).strip("-")
+    slug = "-".join(part for part in slug.split("-") if part) or "cv"
+    return f"{slug}.pdf"
+
+
+app = create_app()
