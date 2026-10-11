@@ -290,6 +290,85 @@ h1.pitch {
 
 .who .photo img { height: 22rem; }
 
+/* 3-Column Card Layout for Pitch & Detail Slides */
+.cards-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.6rem;
+}
+
+.card {
+  background: var(--strip);
+  color: var(--strip-ink);
+  border-radius: 2px;
+  padding: 1.3rem 1.35rem 1.45rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.card.light {
+  background: var(--sheet);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.card h2 {
+  font-family: var(--serif);
+  font-weight: 560;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  margin: 0 0 0.6rem;
+}
+
+.card p {
+  margin: 0;
+  color: #d5e6db;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.card.light p {
+  color: var(--muted);
+}
+
+.card .tag {
+  display: inline-block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: #92dfb3;
+  margin-bottom: 0.5rem;
+}
+
+.card.light .tag {
+  color: var(--grass-deep);
+}
+
+.formula {
+  background: rgba(27, 107, 69, 0.15);
+  border: 1px solid rgba(27, 107, 69, 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  padding: 0.4rem 0.65rem;
+  border-radius: 3px;
+  font-size: 0.95rem;
+  display: inline-block;
+  margin: 0.5rem 0;
+  color: var(--strip-ink);
+}
+
+.card.light .formula {
+  background: #f0f7f3;
+  color: var(--grass-deep);
+}
+
+@media (max-width: 860px) {
+  .cards-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .split, .steps, .outcomes, .who { grid-template-columns: 1fr; }
   h1 { max-width: none; }

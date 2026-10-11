@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Green Grass. Deterministic Code Engine.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:opsz,wght@7..72,560;7..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="deck.css">
+</head>
+<body data-prev="check.html" data-next="outcomes.html">
+  <a class="skip" href="#slide">Skip to slide</a>
+  <main class="stage" id="slide">
+    <p class="say">Under the Hood</p>
+    <h1>Code Decides Fit, Not an LLM Guess.</h1>
+    <p class="lede">Suitability is calculated by a deterministic Python engine (<code>app/services/fit.py</code>), never delegated to model hallucinations:</p>
+    <div class="cards-3">
+      <article class="card">
+        <span class="icon big" style="--icon: url('icons/seal-check.svg')" aria-hidden="true"></span>
+        <span class="tag">Math Formula</span>
+        <h2>Scoring in Python</h2>
+        <div><span class="formula">score = round(100 * (0.7 * coverage + 0.3 * years_score))</span></div>
+        <p>A candidate is suitable only when required skills exist and the calculated score exceeds 60. Math decides, never a prompt.</p>
+      </article>
+      <article class="card">
+        <span class="icon big" style="--icon: url('icons/clipboard-text.svg')" aria-hidden="true"></span>
+        <span class="tag">Evidence Match</span>
+        <h2>Contiguous Quotes</h2>
+        <p>A skill only counts if the engine quotes a contiguous excerpt of at least 40 characters from the CV's work history. Sibling tools never count (Angular never proves React).</p>
+      </article>
+      <article class="card">
+        <span class="icon big" style="--icon: url('icons/calendar-check.svg')" aria-hidden="true"></span>
+        <span class="tag">Seniority Math</span>
+        <h2>Industry Floors</h2>
+        <p>Experience years are checked against strict seniority floors: Junior 0, Mid 3, Senior 5, Lead/Staff 8, Principal 10. Missing CV dates count as 0.</p>
+      </article>
+    </div>
+  </main>
+  <footer class="deck-nav">
+    <a class="wordmark" href="index.html">Green Grass</a>
+    <p>6 of 9</p>
+    <nav aria-label="Slides">
+      <a href="check.html">Back</a>
+      <a href="outcomes.html">Next</a>
+    </nav>
+  </footer>
+  <script src="deck.js"></script>
+</body>
+</html>
