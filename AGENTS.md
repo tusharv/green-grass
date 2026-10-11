@@ -57,7 +57,7 @@ Resume text, job text, and work history are data. Keep them inside the `<resume>
 
 ## Routes
 
-Client: `/` desk, `/login`, `/register`, `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{token}` (no sign-in).
+Client: `/` desk, `/login`, `/register`, `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{first}-{last}-{hash}` (no sign-in). The hash is 16 hex characters. A single name, or a name with no ASCII letters, uses that one word or `profile` before the hash.
 
 API, all under the signed-in user except session, register, login, and the public profile:
 

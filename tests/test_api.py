@@ -5,7 +5,7 @@ from docx import Document
 from fastapi.testclient import TestClient
 
 from app.config import Settings
-from app.main import create_app
+from app.main import _name_slug, create_app
 from app.services.prompts import EXTRACT_JOB, EXTRACT_RESUME, REWRITE_CV, SCREEN, UPSKILL
 from tests.samples import SAMPLE_PROFILE, gap_job, suitable_job
 
@@ -379,6 +379,16 @@ def test_csrf_is_required(tmp_path):
     assert response.status_code == 403
 
 
+def test_profile_slug_uses_first_and_last_name():
+    assert _name_slug("Ada Lovelace") == "ada-lovelace"
+    assert _name_slug("Ada Augusta King Lovelace") == "ada-lovelace"
+    assert _name_slug("Ada") == "ada"
+    assert _name_slug("José García") == "jose-garcia"
+    assert _name_slug("Mary-Jane O'Connor") == "mary-jane-o-connor"
+    assert _name_slug("   ") == "profile"
+    assert len(_name_slug("A" * 80 + " " + "B" * 80)) <= 47
+
+
 def test_employer_profile_is_the_saved_cv_without_the_practice_plan(tmp_path):
     model = ScriptedModel(gap_job().model_dump(), gap=GAP, screen=None)
     settings = Settings(
@@ -419,6 +429,9 @@ def test_employer_profile_is_the_saved_cv_without_the_practice_plan(tmp_path):
     assert published.status_code == 200, published.text
     share_path = published.json()["share_path"]
     token = share_path.rsplit("/", 1)[-1]
+    assert share_path.startswith("/profiles/ada-lovelace-")
+    assert len(token.removeprefix("ada-lovelace-")) == 16
+    assert all(ch in "0123456789abcdef" for ch in token.removeprefix("ada-lovelace-"))
     detail = owner.get(f"/api/applications/{application_id}").json()
     assert detail["candidate_name"] == "Ada Lovelace"
     assert detail["share_path"] == share_path

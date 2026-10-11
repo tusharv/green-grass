@@ -1,4 +1,6 @@
+import re
 import secrets
+import unicodedata
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -474,11 +476,12 @@ def _publish_profile(db: Session, row: Application) -> ProfileShare:
     if row.share is not None:
         row.share = None
         db.flush()
+    document = _employer_document(row)
     share = ProfileShare(
         application_id=row.id,
-        token=secrets.token_urlsafe(18),
+        token=_fresh_profile_token(db, (document.get("contact") or {}).get("name") or ""),
         role_title=row.role_title,
-        document_json=_employer_document(row),
+        document_json=document,
     )
     row.share = share
     db.commit()
@@ -575,6 +578,35 @@ async def _read_upload(file: UploadFile, max_bytes: int, too_large: str) -> byte
             raise HTTPException(status_code=400, detail=too_large)
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+def _name_slug(name: str) -> str:
+    """First and last name, ASCII, for a public profile path."""
+    folded = unicodedata.normalize("NFKD", name or "")
+    ascii_name = folded.encode("ascii", "ignore").decode("ascii")
+    parts = [part for part in re.split(r"\s+", ascii_name.strip()) if part]
+    if len(parts) >= 2:
+        chosen = f"{parts[0]} {parts[-1]}"
+    elif parts:
+        chosen = parts[0]
+    else:
+        chosen = "profile"
+    slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in chosen)
+    slug = "-".join(part for part in slug.split("-") if part) or "profile"
+    return slug[:47].strip("-") or "profile"
+
+
+def _profile_token(name: str) -> str:
+    return f"{_name_slug(name)}-{secrets.token_hex(8)}"
+
+
+def _fresh_profile_token(db: Session, name: str) -> str:
+    for _ in range(5):
+        token = _profile_token(name)
+        taken = db.query(ProfileShare.id).filter(ProfileShare.token == token).first()
+        if taken is None:
+            return token
+    raise RuntimeError("Could not allocate a profile link.")
 
 
 def _pdf_filename(role_title: str) -> str:
