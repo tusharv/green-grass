@@ -142,7 +142,7 @@
           <section aria-labelledby="next-step">
             <h2 id="next-step" class="artifact-heading"><span aria-hidden="true">✓</span> Your tailored CV</h2>
             <p class="artifact-note">Review the wording below before downloading your PDF.</p>
-            <CvSheet document={row.result.document} />
+            <CvSheet document={row.result.document} logosUrl={`/api/applications/${id}/logos`} />
           </section>
         {:else if row.result?.report}
           <div class="roadmap">

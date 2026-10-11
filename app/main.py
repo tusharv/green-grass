@@ -25,6 +25,7 @@ from app.database import Base, make_engine, make_session_factory
 from app.models import Application, CV, ProfileShare, User
 from app.schemas import CvDocument, GapReport, Profile
 from app.services.llm import ModelError, OllamaCloudClient
+from app.services.logos import CompanyLogos
 from app.services.parser import UploadError, extract_text
 from app.services.pdf import render_pdf
 from app.services.pipeline import analyze_role, build_profile
@@ -60,6 +61,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     app.state.engine = engine
     app.state.Session = session_factory
     app.state.model = model
+    app.state.logos = CompanyLogos()
 
     app.add_middleware(
         SessionMiddleware,
@@ -320,6 +322,31 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             body["cv_id"] = share.application.cv_id
             body["application_id"] = share.application.id
         return body
+
+    def company_logo(document: dict, index: int):
+        roles = document.get("experience") or []
+        if index < 0 or index >= len(roles):
+            raise HTTPException(status_code=404, detail="That employer was not found.")
+        logo = app.state.logos.lookup(roles[index].get("employer") or "")
+        return JSONResponse(logo or {"url": None, "source": None}, headers={"Cache-Control": "private, no-store"})
+
+    @app.get("/api/cvs/{cv_id}/logos/{index}")
+    def cv_logo(cv_id: int, index: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        return company_logo(owned_cv(db, user, cv_id).profile_json, index)
+
+    @app.get("/api/applications/{application_id}/logos/{index}")
+    def application_logo(application_id: int, index: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        return company_logo(_employer_document(row), index)
+
+    @app.get("/api/profiles/{token}/logos/{index}")
+    def profile_logo(token: str, index: int, db: Session = Depends(get_db)):
+        share = db.query(ProfileShare).filter(ProfileShare.token == token).one_or_none()
+        if share is None:
+            raise HTTPException(status_code=404, detail="That profile was not found.")
+        return company_logo(share.document_json or {}, index)
 
     @app.get("/")
     @app.get("/{full_path:path}")

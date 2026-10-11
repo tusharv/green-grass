@@ -197,3 +197,20 @@ Mutations send the `x-csrf-token` header from `GET /api/session`. `GET /api/appl
 | `frontend/src/pages/` | Svelte pages |
 | `render.yaml` | Render web service and Postgres |
 | `Dockerfile` | Node build, then Python 3.12 |
+
+### Company logos
+
+CV details, ready results, and shared profiles load employer logos separately from
+CV content. `app/services/logos.py` looks up an exact name or alias in Wikidata,
+requires a single match with an official website and a current logo claim, and
+resolves that image through Wikimedia Commons. Only the employer name is sent;
+CV text and contact details are not sent. No extra key or Gemma call is needed.
+
+Successful lookups are cached in memory for 24 hours, misses for five minutes,
+with at most 512 entries per worker. Provider errors, ambiguous names, missing
+images, and blocked network access show a neutral icon. Wikimedia coverage is
+incomplete; a missing logo does not mean the employer is invalid. Logos are
+presentation metadata and do not change saved CV facts, fit scoring, or PDFs.
+The image endpoints enforce the same ownership or public-share checks as the CV.
+Existing CVs, role results, and published profile links use the same lookup when
+opened or refreshed. No re-upload, republishing, or database backfill is needed.

@@ -1,7 +1,8 @@
 <script>
   import Icon from './Icon.svelte';
+  import CompanyLogo from './CompanyLogo.svelte';
 
-  let { document, roleTitle = '' } = $props();
+  let { document, roleTitle = '', logosUrl = '' } = $props();
   const contact = $derived(document?.contact || {});
   const contacts = $derived.by(() => contactItems(contact));
   const hasSummary = $derived(Boolean(document?.summary));
@@ -85,7 +86,12 @@
                     <strong>{role.title}</strong>
                     {#if dates(role)}<span class="dates">{dates(role)}</span>{/if}
                   </p>
-                  {#if role.employer}<p class="employer">{role.employer}</p>{/if}
+                  {#if role.employer}
+                    <p class="employer employer-with-logo">
+                      <CompanyLogo company={role.employer} endpoint={logosUrl ? `${logosUrl}/${index}` : ''} />
+                      <span>{role.employer}</span>
+                    </p>
+                  {/if}
                   {#if role.bullets?.length}
                     <ul>
                       {#each role.bullets as bullet, bulletIndex (bulletIndex)}
@@ -131,3 +137,7 @@
     </div>
   {/if}
 </article>
+
+<style>
+  .employer-with-logo { display: flex; align-items: center; gap: 8px; }
+</style>

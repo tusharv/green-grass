@@ -509,3 +509,96 @@ def test_ready_profile_uses_the_fact_checked_cv(tmp_path):
     removed = client.delete(f"/api/cvs/{cv_id}", headers=_headers(_csrf(client)))
     assert removed.status_code == 204
     assert guest.get(f"/api/profiles/{token}").status_code == 404
+
+
+def test_company_logos_follow_cv_and_share_access(tmp_path):
+    owner = _client(tmp_path, ScriptedModel(suitable_job().model_dump(), rewrite=REWRITE))
+    guest = TestClient(owner.app)
+    _register(owner)
+    cv_id = _upload(owner)
+    logo = {'url': 'https://upload.wikimedia.org/acme.png', 'source': 'https://commons.wikimedia.org/wiki/File:Acme.svg'}
+
+    class Logos:
+        def lookup(self, employer):
+            assert employer == 'Analytical Engines'
+            return logo
+
+    owner.app.state.logos = Logos()
+    cv_url = f'/api/cvs/{cv_id}/logos/0'
+    assert owner.get(cv_url).json() == logo
+    assert guest.get(cv_url).status_code == 401
+    assert owner.get(f'/api/cvs/{cv_id}/logos/-1').status_code == 404
+    assert owner.get(f'/api/cvs/{cv_id}/logos/1').status_code == 404
+    created = owner.post('/api/applications', json={'cv_id': cv_id, 'role_title': 'Programmer', 'job_description': 'Python and SQL required'}, headers=_headers(_csrf(owner)))
+    assert created.status_code == 201
+    app_id = created.json()['id']
+    app_url = f'/api/applications/{app_id}/logos/0'
+    assert owner.get(app_url).json() == logo
+    assert guest.get(app_url).status_code == 401
+    published = owner.post(f'/api/applications/{app_id}/profile', headers=_headers(_csrf(owner)))
+    token = published.json()['share_path'].rsplit('/', 1)[-1]
+    public_url = f'/api/profiles/{token}/logos/0'
+    assert guest.get(public_url).json() == logo
+    _register(guest, 'other@example.com')
+    assert guest.get(cv_url).status_code == 404
+    assert guest.get(app_url).status_code == 404
+    owner.delete(f'/api/applications/{app_id}/profile', headers=_headers(_csrf(owner)))
+    assert guest.get(public_url).status_code == 404
+
+
+def test_preexisting_profiles_get_logos_without_reupload_or_republish(tmp_path):
+    """Old records contain no logo metadata; resolve from their saved employers."""
+    from copy import deepcopy
+
+    from app.models import CV, ProfileShare
+    from app.services.logos import CompanyLogos
+    import httpx
+
+    original = _client(tmp_path, ScriptedModel(suitable_job().model_dump(), rewrite=REWRITE))
+    _register(original)
+    cv_id = _upload(original)
+    created = original.post(
+        '/api/applications',
+        json={'cv_id': cv_id, 'role_title': 'Programmer', 'job_description': 'Python and SQL required'},
+        headers=_headers(_csrf(original)),
+    )
+    assert created.status_code == 201
+    app_id = created.json()['id']
+    published = original.post(f'/api/applications/{app_id}/profile', headers=_headers(_csrf(original)))
+    token = published.json()['share_path'].rsplit('/', 1)[-1]
+    with original.app.state.Session() as db:
+        old_cv = deepcopy(db.get(CV, cv_id).profile_json)
+        old_share = deepcopy(db.query(ProfileShare).filter_by(token=token).one().document_json)
+
+    # A fresh app opens the existing database. No upload/publish/model call occurs.
+    restarted = create_app(original.app.state.settings, model=ScriptedModel({}))
+
+    def provider(request):
+        action = request.url.params['action']
+        if action == 'wbsearchentities':
+            assert request.url.params['search'] == 'Analytical Engines'
+            return httpx.Response(200, json={'search': [{'id': 'Q1', 'label': 'Analytical Engines'}]})
+        if action == 'wbgetentities':
+            return httpx.Response(200, json={'entities': {'Q1': {'claims': {
+                'P856': [{'mainsnak': {'datavalue': {'value': 'https://example.com'}}}],
+                'P154': [{'mainsnak': {'datavalue': {'value': 'Engines.svg'}}}],
+            }}}})
+        return httpx.Response(200, json={'query': {'pages': {'1': {'imageinfo': [{
+            'thumburl': 'https://upload.wikimedia.org/engines.png',
+            'descriptionurl': 'https://commons.wikimedia.org/wiki/File:Engines.svg',
+        }]}}}})
+
+    with httpx.Client(transport=httpx.MockTransport(provider)) as provider_client:
+        restarted.state.logos = CompanyLogos(client=provider_client)
+        guest = TestClient(restarted)
+        logo = guest.get(f'/api/profiles/{token}/logos/0')
+        assert logo.status_code == 200
+        assert logo.json()['url'] == 'https://upload.wikimedia.org/engines.png'
+        owner = TestClient(restarted)
+        login = owner.post('/api/login', json={'email': 'ada@example.com', 'password': 'correct-horse'}, headers=_headers(_csrf(owner)))
+        assert login.status_code == 200
+        assert owner.get(f'/api/cvs/{cv_id}/logos/0').json() == logo.json()
+        assert owner.get(f'/api/applications/{app_id}/logos/0').json() == logo.json()
+        assert guest.get(f'/api/profiles/{token}').json()['document'] == old_share
+        assert owner.get(f'/api/cvs/{cv_id}').json()['profile'] == old_cv
+        assert restarted.state.model.calls == []

@@ -65,7 +65,7 @@
         />
       </div>
     </header>
-    <CvSheet document={cv.profile} />
+    <CvSheet document={cv.profile} logosUrl={`/api/cvs/${id}/logos`} />
     <div class="section-head">
       <h2><Icon name="role" size={18} /> Roles checked</h2>
     </div>

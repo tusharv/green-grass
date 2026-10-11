@@ -26,7 +26,7 @@
 <section class="stack cv-page">
   {#if error}<p class="alert" role="alert">{error}</p>{/if}
   {#if profile}
-    <CvSheet document={profile.document} roleTitle={profile.role_title} />
+    <CvSheet document={profile.document} roleTitle={profile.role_title} logosUrl={`/api/profiles/${encodeURIComponent(token)}/logos`} />
     {#if profile.application_id}
       <p class="meta">
         <a href="/cvs/{profile.cv_id}">Saved CV</a>
