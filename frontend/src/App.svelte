@@ -4,6 +4,8 @@
   import { matchRoute } from './lib/routes.js';
   import { api, loadSession, session } from './lib/session.svelte.js';
   import Icon from './lib/Icon.svelte';
+  import BrandLogo from './lib/BrandLogo.svelte';
+  import { getInitials } from './lib/user.js';
   import Login from './pages/Login.svelte';
   import Register from './pages/Register.svelte';
   import Dashboard from './pages/Dashboard.svelte';
@@ -15,6 +17,7 @@
 
   let booted = $state(false);
   const route = $derived(matchRoute(locationState.path));
+  const userInitials = $derived(getInitials(session.user?.email));
 
   onMount(async () => {
     const onPop = () => {
@@ -64,7 +67,10 @@
 <div class="frame" class:bare={route.name === 'profile'}>
   {#if route.name !== 'profile'}
   <header class="bar">
-    <a class="wordmark" href="/" onclick={(event) => followLink(event, '/')}>Green Grass</a>
+    <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
+      <BrandLogo size={28} />
+      <span class="wordmark">Green Grass</span>
+    </a>
     <nav>
       {#if session.user}
         <a
@@ -73,8 +79,11 @@
           aria-current={route.name === 'home' ? 'page' : undefined}
           onclick={(event) => followLink(event, '/')}
         ><Icon name="desk" size={16} /> Desk</a>
-        <span class="account" title={session.user.email}>{session.user.email}</span>
-        <button type="button" class="text" onclick={signOut}>Sign out</button>
+        <div class="user-chip" title={session.user.email}>
+          <span class="user-avatar" aria-hidden="true">{userInitials}</span>
+          <span class="account">{session.user.email}</span>
+        </div>
+        <button type="button" class="text signout-btn" onclick={signOut}>Sign out</button>
       {:else if route.name !== 'profile'}
         <a
           href="/login"
