@@ -17,6 +17,6 @@ export function matchRoute(full) {
   found = path.match(/^\/profiles\/([A-Za-z0-9_-]+)$/);
   if (found) return { name: 'profile', auth: false, token: found[1] };
 
-  if (path === '/') return { name: 'home', auth: true };
+  if (path === '/') return { name: 'home', auth: false };
   return { name: 'missing', auth: false };
 }

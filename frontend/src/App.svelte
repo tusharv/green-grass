@@ -9,6 +9,7 @@
   import Login from './pages/Login.svelte';
   import Register from './pages/Register.svelte';
   import Dashboard from './pages/Dashboard.svelte';
+  import Landing from './pages/Landing.svelte';
   import Upload from './pages/Upload.svelte';
   import CvDetail from './pages/CvDetail.svelte';
   import Apply from './pages/Apply.svelte';
@@ -64,7 +65,7 @@
   }
 </script>
 
-<div class="frame" class:bare={route.name === 'profile'}>
+<div class="frame" class:bare={route.name === 'profile'} class:landing-frame={route.name === 'home' && !session.user}>
   {#if route.name !== 'profile'}
   <header class="bar">
     <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
@@ -108,6 +109,8 @@
       <Register />
     {:else if route.name === 'home' && session.user}
       <Dashboard />
+    {:else if route.name === 'home'}
+      <Landing />
     {:else if route.auth && !session.user}
       <p class="hint">Loading…</p>
     {:else if route.name === 'upload'}

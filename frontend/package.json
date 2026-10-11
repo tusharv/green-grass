@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test src/lib/routes.test.js",
     "dev": "vite",
     "build": "vite build"
   },

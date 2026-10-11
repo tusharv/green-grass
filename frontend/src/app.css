@@ -121,6 +121,9 @@ button.text:active {
 
 .frame.bare { padding-top: 2rem; }
 
+.frame.landing-frame { padding-bottom: 2rem; }
+.landing-frame .bar { margin-bottom: 1.5rem; }
+
 @media (max-width: 760px) {
   .frame.bare { padding: 1rem 1rem 3rem; }
 }
