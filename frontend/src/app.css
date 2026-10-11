@@ -277,6 +277,68 @@ h4 {
 
 .narrow { max-width: 36rem; }
 
+.desk-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.25rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.welcome-main {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.welcome-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: repeating-linear-gradient(115deg, #10603f 0 14px, #157049 14px 28px);
+  color: #ffffff;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(16, 96, 63, 0.2);
+}
+
+.welcome-text {
+  min-width: 0;
+}
+
+.welcome-text .eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.welcome-text h1 {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 1.75rem;
+  word-break: break-word;
+}
+
+.welcome-text .welcome-email {
+  color: var(--accent-deep);
+}
+
+.welcome-text .lede {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
 .page-head {
   display: flex;
   justify-content: space-between;
@@ -774,6 +836,16 @@ textarea:focus-visible {
   .user-chip .account { max-width: 9rem; }
   .account { max-width: 100%; }
 
+  .desk-welcome {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+
+  .desk-welcome .button {
+    width: 100%;
+  }
+
   .page-head,
   .result {
     display: grid;
@@ -822,6 +894,20 @@ textarea:focus-visible {
 
   .user-chip .account { max-width: 7rem; }
   .account { max-width: 14rem; }
+
+  .welcome-main {
+    gap: 0.85rem;
+  }
+
+  .welcome-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.05rem;
+  }
+
+  .welcome-text h1 {
+    font-size: 1.4rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

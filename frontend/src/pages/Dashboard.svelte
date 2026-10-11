@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
   import Icon from '../lib/Icon.svelte';
-  import { api } from '../lib/session.svelte.js';
+  import { api, session } from '../lib/session.svelte.js';
+  import { getInitials } from '../lib/user.js';
 
   let cvs = $state([]);
   let applications = $state([]);
@@ -13,6 +14,7 @@
   const readyCount = $derived(applications.filter((row) => row.suitable).length);
   const gapCount = $derived(applications.length - readyCount);
   const hasWork = $derived(cvs.length > 0 || applications.length > 0);
+  const userInitials = $derived(getInitials(session.user?.email));
 
   onMount(async () => {
     try {
@@ -60,11 +62,14 @@
 </script>
 
 <section class="desk">
-  <header class="page-head">
-    <div>
-      <p class="eyebrow">Desk</p>
-      <h1>Your CVs and roles</h1>
-      <p class="lede">Upload a CV, check it against one role, and remove anything you no longer need.</p>
+  <header class="desk-welcome">
+    <div class="welcome-main">
+      <span class="welcome-avatar" aria-hidden="true">{userInitials}</span>
+      <div class="welcome-text">
+        <p class="eyebrow">Career Desk</p>
+        <h1>Welcome back{#if session.user?.email}, <span class="welcome-email">{session.user.email}</span>{/if}</h1>
+        <p class="lede">Upload a CV, check it against one role, and remove anything you no longer need.</p>
+      </div>
     </div>
     <a class="button" href="/cvs/new"><Icon name="upload" size={18} /> Upload a CV</a>
   </header>
