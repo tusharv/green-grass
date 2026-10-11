@@ -12,7 +12,7 @@ The model extracts structure and rewrites wording. It does not decide whether th
 4. **Ready to send** when the score clears the bar: a rewritten CV, the fit report, and a PDF download.
 5. **Gaps to close** when it does not: missing required skills first, then preferred skills, with a way to practice each one. There is no rewritten CV and no PDF.
 
-A skills list on the CV is not evidence. A required skill counts only when the screen quotes a real bullet from the work history and that quote is a contiguous excerpt of the bullet.
+A required skill counts when the screen quotes a real bullet from the work history and that quote is a contiguous excerpt of the bullet. A bullet can show a skill through work built on it, such as a Next.js app showing React. If no bullet shows it, the skill still counts when it appears in the CV's skills list, and the review says it came from the skills list.
 
 ## System
 

@@ -22,12 +22,13 @@ from app.auth import (
 )
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
 from app.database import Base, make_engine, make_session_factory
-from app.models import Application, CV, ProfileShare, User
+from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
 from app.schemas import CvDocument, GapReport, Profile
 from app.services.llm import ModelError, OllamaCloudClient
 from app.services.logos import CompanyLogos
 from app.services.parser import UploadError, extract_text
 from app.services.pdf import render_pdf
+from app.services.photos import MAX_PHOTO_BYTES, PhotoError, github_avatar, github_handle, square_jpeg
 from app.services.pipeline import analyze_role, build_profile
 
 DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
@@ -167,7 +168,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     ):
         require_csrf(request)
         user = require_user(request, db)
-        data = await _read_upload(file, settings.max_upload_bytes)
+        data = await _read_upload(file, settings.max_upload_bytes, "This file is larger than 5 MB.")
         try:
             text = extract_text(file.filename or "", data, settings.max_upload_bytes)
             profile = build_profile(model_client(), text)
@@ -204,6 +205,56 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         db.delete(cv)
         db.commit()
         return Response(status_code=204)
+
+    def set_photo(db: Session, cv: CV, source: str, data: bytes | None = None) -> None:
+        if cv.photo is None:
+            cv.photo = CvPhoto(source=source, data=data)
+        else:
+            cv.photo.source = source
+            cv.photo.data = data
+            cv.photo.updated_at = utcnow()
+        db.commit()
+        db.refresh(cv)
+
+    @app.post("/api/cvs/{cv_id}/photo")
+    async def upload_photo(
+        cv_id: int,
+        request: Request,
+        file: UploadFile = File(...),
+        db: Session = Depends(get_db),
+    ):
+        require_csrf(request)
+        user = require_user(request, db)
+        cv = owned_cv(db, user, cv_id)
+        data = await _read_upload(file, MAX_PHOTO_BYTES, "This photo is larger than 3 MB.")
+        try:
+            jpeg = square_jpeg(data)
+        except PhotoError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        set_photo(db, cv, "upload", jpeg)
+        return {"photo": _photo(cv, cv.profile_json, f"/api/cvs/{cv.id}/photo")}
+
+    @app.post("/api/cvs/{cv_id}/photo/github")
+    def use_github_photo(cv_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        cv = owned_cv(db, user, cv_id)
+        if not _github_for(cv.profile_json):
+            raise HTTPException(status_code=400, detail="This CV has no GitHub link to take a photo from.")
+        set_photo(db, cv, "github")
+        return {"photo": _photo(cv, cv.profile_json, f"/api/cvs/{cv.id}/photo")}
+
+    @app.delete("/api/cvs/{cv_id}/photo", status_code=204)
+    def remove_photo(cv_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        set_photo(db, owned_cv(db, user, cv_id), "none")
+        return Response(status_code=204)
+
+    @app.get("/api/cvs/{cv_id}/photo")
+    def cv_photo(cv_id: int, request: Request, db: Session = Depends(get_db)):
+        user = require_user(request, db)
+        return _photo_bytes(owned_cv(db, user, cv_id))
 
     @app.get("/api/applications")
     def list_applications(request: Request, db: Session = Depends(get_db)):
@@ -316,7 +367,10 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             "name": contact.get("name") or "Candidate",
             "role_title": share.role_title,
             "document": document,
+            "photo": None,
         }
+        if share.application is not None:
+            body["photo"] = _photo(share.application.cv, document, f"/api/profiles/{token}/photo")
         user = current_user(request, db)
         if user is not None and share.application is not None and share.application.user_id == user.id:
             body["cv_id"] = share.application.cv_id
@@ -347,6 +401,13 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         if share is None:
             raise HTTPException(status_code=404, detail="That profile was not found.")
         return company_logo(share.document_json or {}, index)
+
+    @app.get("/api/profiles/{token}/photo")
+    def profile_photo(token: str, db: Session = Depends(get_db)):
+        share = db.query(ProfileShare).filter(ProfileShare.token == token).one_or_none()
+        if share is None or share.application is None:
+            raise HTTPException(status_code=404, detail="That profile was not found.")
+        return _photo_bytes(share.application.cv)
 
     @app.get("/")
     @app.get("/{full_path:path}")
@@ -417,7 +478,41 @@ def _cv_summary(row: CV) -> dict:
 
 def _cv_detail(row: CV) -> dict:
     versions = sorted(row.applications, key=lambda item: item.created_at, reverse=True)
-    return {**_cv_summary(row), "profile": row.profile_json, "versions": [_version_summary(item) for item in versions]}
+    return {
+        **_cv_summary(row),
+        "profile": row.profile_json,
+        "photo": _photo(row, row.profile_json, f"/api/cvs/{row.id}/photo"),
+        "github": _github_for(row.profile_json) or None,
+        "versions": [_version_summary(item) for item in versions],
+    }
+
+
+def _github_for(document: dict | None) -> str:
+    contact = (document or {}).get("contact") or {}
+    return github_handle(contact.get("links"))
+
+
+def _photo(cv: CV, document: dict | None, upload_url: str) -> dict | None:
+    """Which photo an employer sees. With no choice saved, a GitHub link on the CV supplies one."""
+    choice = cv.photo.source if cv.photo is not None else "github"
+    if choice == "upload" and cv.photo is not None and cv.photo.data:
+        version = int(cv.photo.updated_at.timestamp())
+        return {"url": f"{upload_url}?v={version}", "source": "upload"}
+    if choice == "github":
+        handle = _github_for(document)
+        if handle:
+            return {"url": github_avatar(handle), "source": "github"}
+    return None
+
+
+def _photo_bytes(cv: CV) -> Response:
+    if cv.photo is None or cv.photo.source != "upload" or not cv.photo.data:
+        raise HTTPException(status_code=404, detail="No photo was uploaded for this CV.")
+    return Response(
+        content=cv.photo.data,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "private, max-age=300"},
+    )
 
 
 def _application_summary(row: Application) -> dict:
@@ -447,7 +542,7 @@ def _application_detail(row: Application) -> dict:
     }
 
 
-async def _read_upload(file: UploadFile, max_bytes: int) -> bytes:
+async def _read_upload(file: UploadFile, max_bytes: int, too_large: str) -> bytes:
     chunks: list[bytes] = []
     size = 0
     while True:
@@ -456,7 +551,7 @@ async def _read_upload(file: UploadFile, max_bytes: int) -> bytes:
             break
         size += len(chunk)
         if size > max_bytes:
-            raise HTTPException(status_code=400, detail="This file is larger than 5 MB.")
+            raise HTTPException(status_code=400, detail=too_large)
         chunks.append(chunk)
     return b"".join(chunks)
 

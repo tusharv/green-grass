@@ -67,11 +67,31 @@ def test_quote_missing_from_every_bullet_is_absent():
     assert required[0].quote == ""
 
 
-def test_skills_list_is_not_evidence():
+def test_skills_list_entry_marks_a_skill_present():
+    profile = _profile(LONG_BULLET, skills=["React", "JavaScript (ES2022+)", "Tailwind CSS"])
+    job = JobExtract(required_skills=["React", "JavaScript", "CSS", "PowerApps"], seniority="junior")
+    required, _ = accept_screen(profile, job, _screen([("React", "React")]))
+    assert [mark.present for mark in required] == [True, True, True, False]
+    assert [mark.source for mark in required] == ["skills", "skills", "skills", ""]
+    assert required[1].quote == "JavaScript (ES2022+)"
+    fit = score_fit(profile, job, required, [])
+    assert fit.coverage == 0.75
+    assert fit.suitable is True
+
+
+def test_work_quote_wins_over_skills_list():
     profile = _profile(LONG_BULLET, skills=["Kubernetes"])
     job = JobExtract(required_skills=["Kubernetes"], seniority="junior")
-    required, _ = accept_screen(profile, job, _screen([("Kubernetes", "Kubernetes")]))
-    assert required[0].present is False
+    required, _ = accept_screen(profile, job, _screen([("Kubernetes", LONG_BULLET)]))
+    assert required[0].source == "work"
+    assert required[0].quote == LONG_BULLET
+
+
+def test_skills_list_match_respects_word_boundaries():
+    profile = _profile(LONG_BULLET, skills=["JavaScript", "NoSQL", "React.js"])
+    job = JobExtract(required_skills=["Java", "SQL", "React"], seniority="junior")
+    required, _ = accept_screen(profile, job, ScreenResult())
+    assert [mark.present for mark in required] == [False, False, True]
 
 
 def test_short_excerpt_of_a_long_bullet_is_absent():

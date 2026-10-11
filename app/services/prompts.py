@@ -40,7 +40,8 @@ Do not quote a skills list, a summary, a job title, an employer, or education.
 Do not invent a bullet. Copy skill names from the lists you are given.
 Return one entry for every required and preferred skill, including an empty quote where evidence is missing.
 Choose the most relevant concrete work example and copy the full bullet verbatim, preserving its wording.
-Related tools are not interchangeable: Spark or PySpark alone does not demonstrate Scala; streaming alone does not demonstrate Kafka.
+A bullet shows a skill when the work it describes is built on that skill or cannot be done without it: a Next.js app shows React and JavaScript; building a browser UI shows HTML, CSS, and JavaScript.
+Sibling tools are not interchangeable: Angular does not demonstrate React; Spark or PySpark alone does not demonstrate Scala; streaming alone does not demonstrate Kafka.
 Missing evidence means not evidenced in this CV, not that the person cannot do the skill.
 Do not assign a score, suitability, proficiency rating, or hiring recommendation. Code makes the fit decision.
 Return a JSON object and no other text:

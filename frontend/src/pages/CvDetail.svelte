@@ -3,6 +3,7 @@
   import CvSheet from '../lib/CvSheet.svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
   import Icon from '../lib/Icon.svelte';
+  import PhotoPicker from '../lib/PhotoPicker.svelte';
   import { navigate } from '../lib/nav.svelte.js';
   import { api } from '../lib/session.svelte.js';
 
@@ -65,6 +66,13 @@
         />
       </div>
     </header>
+    <PhotoPicker
+      cvId={cv.id}
+      name={cv.name}
+      bind:photo={cv.photo}
+      github={cv.github}
+      hasLinkedin={(cv.profile?.contact?.links || []).some((link) => /linkedin\.com/i.test(link))}
+    />
     <CvSheet document={cv.profile} logosUrl={`/api/cvs/${id}/logos`} />
     <div class="section-head">
       <h2><Icon name="role" size={18} /> Roles checked</h2>

@@ -61,7 +61,8 @@
   }
 </script>
 
-<div class="frame">
+<div class="frame" class:bare={route.name === 'profile'}>
+  {#if route.name !== 'profile'}
   <header class="bar">
     <a class="wordmark" href="/" onclick={(event) => followLink(event, '/')}>Green Grass</a>
     <nav>
@@ -88,9 +89,10 @@
       {/if}
     </nav>
   </header>
+  {/if}
   <main>
     {#if !booted}
-      <p class="hint">Loading…</p>
+      {#if route.name !== 'profile'}<p class="hint">Loading…</p>{/if}
     {:else if route.name === 'login'}
       <Login />
     {:else if route.name === 'register'}

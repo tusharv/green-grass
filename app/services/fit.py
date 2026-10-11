@@ -85,7 +85,15 @@ def quote_accepted(quote: str, bullets: list[str]) -> bool:
     return False
 
 
-def _marks_for(names: list[str], quotes: list, bullets: list[str]) -> list[SkillMark]:
+def listed_skill(name: str, skills: list[str]) -> str:
+    wanted = canon_phrase(name)
+    for entry in skills:
+        if entry and phrase_in(wanted, canon_phrase(entry)):
+            return entry
+    return ""
+
+
+def _marks_for(names: list[str], quotes: list, bullets: list[str], skills: list[str]) -> list[SkillMark]:
     by_key: dict[str, str] = {}
     for item in quotes:
         key = canon_phrase(item.skill)
@@ -94,15 +102,21 @@ def _marks_for(names: list[str], quotes: list, bullets: list[str]) -> list[Skill
     marks: list[SkillMark] = []
     for name in names:
         quote = by_key.get(canon_phrase(name), "")
-        accepted = quote_accepted(quote, bullets)
-        marks.append(SkillMark(name=name, present=accepted, quote=quote if accepted else ""))
+        if quote_accepted(quote, bullets):
+            marks.append(SkillMark(name=name, present=True, quote=quote, source="work"))
+            continue
+        entry = listed_skill(name, skills)
+        if entry:
+            marks.append(SkillMark(name=name, present=True, quote=entry, source="skills"))
+            continue
+        marks.append(SkillMark(name=name, present=False))
     return marks
 
 
 def accept_screen(profile: Profile, job: JobExtract, screen) -> tuple[list[SkillMark], list[SkillMark]]:
     bullets = work_bullets(profile)
-    required = _marks_for(job.required_skills, screen.required, bullets)
-    preferred = _marks_for(job.preferred_skills, screen.preferred, bullets)
+    required = _marks_for(job.required_skills, screen.required, bullets, profile.skills)
+    preferred = _marks_for(job.preferred_skills, screen.preferred, bullets, profile.skills)
     return required, preferred
 
 

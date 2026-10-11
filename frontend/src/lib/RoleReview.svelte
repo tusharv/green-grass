@@ -45,7 +45,7 @@
       <span class="review-icon" aria-hidden="true">≡</span>
       <div><p class="eyebrow">The evidence behind the review</p><h2 id="comparison-title">Job requirement comparison</h2></div>
     </div>
-    <p class="hint">Evidence is quoted from your work history. “Not evidenced” describes this CV, not your ability.</p>
+    <p class="hint">Evidence is quoted from your work history, or matched to your CV skills list. “Not evidenced” describes this CV, not your ability.</p>
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll the comparison on narrow screens.) -->
     <div class="evidence-scroll" tabindex="0" role="region" aria-label="Job requirements and CV evidence">
       <table class="evidence-table">
@@ -57,7 +57,7 @@
               <tr>
                 <th scope="row">{mark.name}<small>{group.label}</small></th>
                 <td><span class:status-present={mark.present} class:status-gap={!mark.present} class="evidence-status"><span aria-hidden="true">{mark.present ? '✓' : '↗'}</span> {mark.present ? 'Evidenced' : group.label === 'Required' ? 'Major gap' : 'Minor gap'}</span></td>
-                <td>{#if mark.present && mark.quote}<blockquote>{mark.quote}</blockquote>{:else if mark.present}<p class="hint">Evidence quote unavailable for this saved review. Check the role again to see it.</p>{:else}<p class="hint">Not evidenced in your CV.</p>{/if}</td>
+                <td>{#if mark.present && mark.source === 'skills'}<p class="hint">Listed in your CV skills: <strong>{mark.quote}</strong>. No work bullet shows it yet.</p>{:else if mark.present && mark.quote}<blockquote>{mark.quote}</blockquote>{:else if mark.present}<p class="hint">Evidence quote unavailable for this saved review. Check the role again to see it.</p>{:else}<p class="hint">Not evidenced in your CV.</p>{/if}</td>
               </tr>
             {/each}
           {/each}

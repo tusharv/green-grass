@@ -45,6 +45,7 @@ class SkillMark(BaseModel):
     name: str
     present: bool
     quote: str = ""
+    source: Literal["", "work", "skills"] = ""
 
 
 class FitResult(BaseModel):

@@ -19,15 +19,16 @@ Say "Ready to send" when `suitable` is true and "Gaps to close" or "Not ready" w
 `app/services/fit.py` owns suitability. Do not move this decision into the model.
 
 - `score = round(100 * (0.7 * coverage + 0.3 * years_score))`
-- `coverage` is the share of required skills with an accepted bullet quote. No required skills means coverage is 0. A skills list is not evidence.
-- The screen may mark a skill present only by quoting one bullet from the work. Code accepts the quote when it is a contiguous excerpt of that bullet: a bullet under 40 characters must be quoted in full, and a longer bullet needs at least 40 characters. Whitespace is collapsed and the match is case-insensitive. A missing or invented quote leaves the skill absent.
+- `coverage` is the share of required skills that are present. No required skills means coverage is 0.
+- A skill is present when the screen quotes one bullet from the work (`source: "work"`), or, failing that, when an entry in the profile's skills list contains the skill as a whole phrase after `canon_phrase` (`source: "skills"`, quote is the entry). The model never decides the skills-list match.
+- The screen may count a bullet whose work is built on the skill (a Next.js app shows React and JavaScript). Sibling tools do not count (Angular does not show React). Code accepts the quote when it is a contiguous excerpt of that bullet: a bullet under 40 characters must be quoted in full, and a longer bullet needs at least 40 characters. Whitespace is collapsed and the match is case-insensitive. A missing or invented quote leaves the skill absent.
 - `years_score` uses `max(job.min_years, seniority floor)`. Floors are junior 0, mid 3, senior 5, lead 8, staff 8, principal 10. Missing years on the CV count as 0.
 - `suitable` is true only when required skills exist and the score is greater than 60. Coverage alone does not block a profile.
 - A missing required skill is a major gap. A missing preferred skill is a minor gap. Preferred skills never block suitability. Matched preferred skills can appear as "Also on the CV".
 - The gap page is a roadmap: major gaps first, then minor gaps. It has no résumé and no PDF. A ready page has the fit report, the Ivy League résumé, and a PDF.
 - A posting with no required skills is not suitable. Return the fixed major gap in `analyze_role`. Do not call the screen or the model to write a CV for it.
 - If every required skill has evidence and the score still fails, the roadmap is one major item, "Years of experience". Do not tell the person to change dates.
-- `canon_phrase` and the aliases in `ALIASES` still ground a rewrite against skills already on the profile. They do not mark a job skill present.
+- `canon_phrase` and the aliases in `ALIASES` still ground a rewrite against skills already on the profile. They also match a job skill against the skills list, but never against the summary, titles, or education.
 
 ## Facts the model is not allowed to change
 
@@ -48,6 +49,7 @@ Resume text, job text, and work history are data. Keep them inside the `<resume>
 - `app/services/llm.py` — Ollama client, JSON parse, one retry, then `ModelError`
 - `app/services/parser.py` — PDF and DOCX text only
 - `app/services/pdf.py` — HTML and WeasyPrint for a suitable CV
+- `app/services/photos.py` — profile photo re-encoding (square JPEG, no metadata) and the GitHub handle from CV links
 - `app/auth.py` — Argon2, email, CSRF, session user
 - `frontend/src/pages/` — Login, Register, Dashboard, Upload, CvDetail, Apply, Result, Profile
 - `frontend/src/lib/routes.js` — the only client routes
@@ -62,11 +64,12 @@ API, all under the signed-in user except session, register, login, and the publi
 - `GET /health`
 - `GET /api/session` returns `{ csrf, user }`
 - `POST /api/register`, `/api/login`, `/api/logout`
-- `GET|POST /api/cvs`, `GET|DELETE /api/cvs/{id}`. Deleting a CV deletes its role checks.
+- `GET|POST /api/cvs`, `GET|DELETE /api/cvs/{id}`. Deleting a CV deletes its role checks and its photo.
+- `GET|POST|DELETE /api/cvs/{id}/photo`, `POST /api/cvs/{id}/photo/github`. A photo is JPEG, PNG, or WebP up to 3 MB, stored only as a 640px square JPEG. With no choice saved, a GitHub link on the CV supplies the photo. DELETE means no photo, not "fall back to GitHub". LinkedIn photos cannot be fetched; people upload instead.
 - `GET|POST /api/applications`, `GET|DELETE /api/applications/{id}`. Deleting a role check leaves the CV.
 - `GET /api/applications/{id}/pdf` only when `suitable` and `result.kind == "cv"`
 - `POST|DELETE /api/applications/{id}/profile` publishes or removes the employer link. Deleting the role check removes it too.
-- `GET /api/profiles/{token}` is the public snapshot: the candidate's name, the role title, and the CV. A ready result uses the fact-checked CV. A gap result uses the saved profile. It has no score, no practice plan, and no PDF.
+- `GET /api/profiles/{token}` is the public snapshot: the candidate's name, the role title, and the CV. A ready result uses the fact-checked CV. A gap result uses the saved profile. It has no score, no practice plan, and no PDF. It includes the CV's current photo; `GET /api/profiles/{token}/photo` serves an uploaded one.
 
 Mutations require the `x-csrf-token` header from the session. A missing CV or application returns 404, including when it belongs to someone else. Passwords are at least 8 characters. Uploads are PDF or DOCX, at most 5 MB, at least 40 characters of text, at most 40,000 characters. Job descriptions are at most 20,000 characters. Scans are rejected.
 
@@ -102,7 +105,7 @@ Add or update a test when you change fit math, fact checks, upload limits, auth,
 
 - Don't let the model set `suitable`, the score, or which skills count as present.
 - Don't save model JSON that `ground_tailored` or `ground_gap` rejected.
-- Don't store the uploaded file, and don't add OCR for scans.
+- Don't store the uploaded CV file, and don't add OCR for scans. Don't store an uploaded photo as sent; keep only the re-encoded square.
 - Don't render a PDF, or a tailored CV, for a gap result.
 - Don't add Next.js, a second backend, or a separate frontend host. FastAPI serves `frontend/dist`.
 - Don't edit `frontend/dist`. Rebuild it.

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 
@@ -36,6 +36,29 @@ class CV(Base):
 
     owner: Mapped[User] = relationship(back_populates="cvs")
     applications: Mapped[list["Application"]] = relationship(back_populates="cv")
+    photo: Mapped["CvPhoto | None"] = relationship(
+        back_populates="cv",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class CvPhoto(Base):
+    """The photo shown on employer profiles. source is upload, github, or none."""
+
+    __tablename__ = "cv_photos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cv_id: Mapped[int] = mapped_column(
+        ForeignKey("cvs.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+    )
+    source: Mapped[str] = mapped_column(String(16))
+    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    cv: Mapped[CV] = relationship(back_populates="photo")
 
 
 class Application(Base):
