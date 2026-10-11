@@ -23,6 +23,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY presentation ./presentation
 COPY --from=frontend /src/dist ./frontend/dist
 
 RUN useradd --create-home --uid 10001 appuser \

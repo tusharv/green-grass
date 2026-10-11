@@ -82,3 +82,31 @@ def test_deck_js_key_bindings():
     deck_js = (PRESENTATION_DIR / "deck.js").read_text(encoding="utf-8")
     assert 'location.href = "index.html"' in deck_js
     assert 'location.href = "honest.html"' in deck_js
+
+
+def test_presentation_routes_served_by_api():
+    from app.main import create_app
+    from starlette.testclient import TestClient
+
+    app = create_app()
+    client = TestClient(app)
+
+    # /presentation redirects to /presentation/ so relative links resolve correctly
+    res = client.get("/presentation", follow_redirects=False)
+    assert res.status_code in (307, 308, 301, 302)
+    assert res.headers["location"] == "/presentation/"
+
+    # /presentation/ returns index.html
+    res = client.get("/presentation/")
+    assert res.status_code == 200
+    assert "What is Green Grass" in res.text
+
+    # /presentation/problem.html returns problem.html
+    res = client.get("/presentation/problem.html")
+    assert res.status_code == 200
+    assert "The Problem" in res.text
+
+    # /presentation/deck.css returns CSS
+    res = client.get("/presentation/deck.css")
+    assert res.status_code == 200
+    assert "--grass" in res.text

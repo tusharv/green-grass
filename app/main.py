@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
@@ -32,6 +32,7 @@ from app.services.photos import MAX_PHOTO_BYTES, PhotoError, github_avatar, gith
 from app.services.pipeline import analyze_role, build_profile
 
 DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+PRESENTATION = Path(__file__).resolve().parent.parent / "presentation"
 
 
 class Credentials(BaseModel):
@@ -408,6 +409,26 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         if share is None or share.application is None:
             raise HTTPException(status_code=404, detail="That profile was not found.")
         return _photo_bytes(share.application.cv)
+
+    @app.get("/presentation")
+    def presentation_root():
+        return RedirectResponse("/presentation/", status_code=307)
+
+    @app.get("/presentation/{file_path:path}")
+    def presentation_file(file_path: str = ""):
+        if not file_path:
+            index = PRESENTATION / "index.html"
+            if index.is_file():
+                return FileResponse(index)
+        candidate = (PRESENTATION / file_path).resolve()
+        if PRESENTATION.resolve() in candidate.parents and candidate.is_file():
+            return FileResponse(candidate)
+        if candidate.is_dir() and (candidate / "index.html").is_file():
+            return FileResponse(candidate / "index.html")
+        index = PRESENTATION / "index.html"
+        if index.is_file():
+            return FileResponse(index)
+        raise HTTPException(status_code=404, detail="Presentation file not found.")
 
     @app.get("/")
     @app.get("/{full_path:path}")
