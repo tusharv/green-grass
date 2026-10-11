@@ -1,18 +1,22 @@
 import httpx
 import pytest
 
-from app.services.logos import CompanyLogos
+from app.services.logos import USER_AGENT, CompanyLogos
+
+COMPANY = {
+    'P856': [{'mainsnak': {'datavalue': {'value': 'https://acme.example'}}}],
+    'P154': [{'rank': 'normal', 'mainsnak': {'datavalue': {'value': 'Acme.svg'}}}],
+}
 
 
-def transport(search=None, claims=None, image=None):
+def transport(search=None, claims=None, image=None, entities=None):
     def respond(request):
         if request.url.host == 'www.wikidata.org':
             if request.url.params['action'] == 'wbsearchentities':
                 return httpx.Response(200, json={'search': search if search is not None else [{'id': 'Q1', 'label': 'Acme'}]})
-            return httpx.Response(200, json={'entities': {'Q1': {'claims': claims if claims is not None else {
-                'P856': [{'mainsnak': {'datavalue': {'value': 'https://acme.example'}}}],
-                'P154': [{'rank': 'normal', 'mainsnak': {'datavalue': {'value': 'Acme.svg'}}}],
-            }}}})
+            ids = request.url.params['ids'].split('|')
+            return httpx.Response(200, json={'entities': {entity_id: {'claims': (entities or {}).get(
+                entity_id, claims if claims is not None else COMPANY)} for entity_id in ids}})
         assert request.url.host == 'commons.wikimedia.org'
         return httpx.Response(200, json={'query': {'pages': {'1': {'imageinfo': [image or {
             'thumburl': 'https://upload.wikimedia.org/acme.png',
@@ -51,6 +55,25 @@ def test_provider_failure_is_cached_and_never_breaks_cv():
     assert service.lookup('Acme') is None
     assert service.lookup('Acme') is None
     assert len(calls) == 1
+
+
+def test_same_name_item_without_website_does_not_block_the_company():
+    search = [{'id': 'Q1', 'label': 'Acme'}, {'id': 'Q2', 'label': 'Acme'}]
+    game = {'P154': [{'rank': 'normal', 'mainsnak': {'datavalue': {'value': 'Game.svg'}}}]}
+    service = CompanyLogos(client=httpx.Client(transport=transport(search=search, entities={'Q2': game})))
+    assert service.lookup('Acme')['url'] == 'https://upload.wikimedia.org/acme.png'
+
+
+def test_commons_thumbnail_host_is_trusted():
+    url = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Acme.svg/120px-Acme.svg.png'
+    service = CompanyLogos(client=httpx.Client(transport=transport(image={
+        'thumburl': url, 'descriptionurl': 'https://commons.wikimedia.org/wiki/File:Acme.svg'})))
+    assert service.lookup('Acme')['url'] == url
+
+
+def test_user_agent_names_a_contact_url():
+    # Wikimedia rejects anonymous clients with 403.
+    assert 'https://' in USER_AGENT
 
 
 def test_untrusted_image_url_is_rejected():

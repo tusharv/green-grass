@@ -11,6 +11,9 @@ import re
 
 import httpx
 
+# Wikimedia returns 403 to clients whose User-Agent has no contact URL or email.
+USER_AGENT = 'GreenGrass/1.0 (https://github.com/tusharv/green-grass; company logo lookup)'
+
 
 class CompanyLogos:
     def __init__(self, client=None):
@@ -33,7 +36,7 @@ class CompanyLogos:
                 result = self._lookup(self.client, name)
             else:
                 with httpx.Client(timeout=3.0, follow_redirects=False,
-                                  headers={'User-Agent': 'GreenGrass/1.0 (company logo lookup)'}) as client:
+                                  headers={'User-Agent': USER_AGENT}) as client:
                     result = self._lookup(client, name)
         except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError):
             result = None
@@ -60,20 +63,17 @@ class CompanyLogos:
                 entity_id = item.get('id', '')
                 if re.fullmatch(r'Q[1-9][0-9]*', entity_id):
                     matches.add(entity_id)
-        if len(matches) != 1:
+        if not matches:
             return None
-        entity_id = matches.pop()
         data = self._get(client, 'www.wikidata.org', action='wbgetentities',
-                         ids=entity_id, props='claims')
-        claims = data['entities'][entity_id].get('claims', {})
-        if not claims.get('P856'):  # Require an official website, not just a same-name item.
+                         ids='|'.join(sorted(matches)), props='claims')
+        # Same-name items (a film, a river) rarely have both an official website and a
+        # current logo; if more than one does, the name is ambiguous and gets no logo.
+        candidates = [logos for entity in data.get('entities', {}).values()
+                      if (logos := _current_logos(entity.get('claims', {})))]
+        if len(candidates) != 1:
             return None
-        logos = [claim for claim in claims.get('P154', [])
-                 if claim.get('rank') != 'deprecated' and not claim.get('qualifiers', {}).get('P582')]
-        logos.sort(key=lambda claim: claim.get('rank') != 'preferred')
-        if not logos:
-            return None
-        filename = logos[0]['mainsnak']['datavalue']['value']
+        filename = candidates[0][0]['mainsnak']['datavalue']['value']
         if not isinstance(filename, str) or len(filename) > 240:
             return None
         data = self._get(client, 'commons.wikimedia.org', action='query',
@@ -81,11 +81,21 @@ class CompanyLogos:
         for page in data.get('query', {}).get('pages', {}).values():
             for info in page.get('imageinfo', []):
                 url, source = info.get('thumburl', ''), info.get('descriptionurl', '')
-                if _trusted_url(url, 'upload.wikimedia.org') and _trusted_url(source, 'commons.wikimedia.org'):
+                if (_trusted_url(url, 'upload.wikimedia.org', 'thumb.wikimedia.org')
+                        and _trusted_url(source, 'commons.wikimedia.org')):
                     return {'url': url, 'source': source}
         return None
 
 
-def _trusted_url(url, host):
+def _current_logos(claims):
+    if not claims.get('P856'):  # Require an official website, not just a same-name item.
+        return []
+    logos = [claim for claim in claims.get('P154', [])
+             if claim.get('rank') != 'deprecated' and not claim.get('qualifiers', {}).get('P582')]
+    logos.sort(key=lambda claim: claim.get('rank') != 'preferred')
+    return logos
+
+
+def _trusted_url(url, *hosts):
     parsed = urlsplit(url)
-    return parsed.scheme == 'https' and parsed.netloc == host
+    return parsed.scheme == 'https' and parsed.netloc in hosts
