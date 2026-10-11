@@ -3,6 +3,7 @@
   import { followLink, locationState, navigate } from './lib/nav.svelte.js';
   import { matchRoute } from './lib/routes.js';
   import { api, loadSession, session } from './lib/session.svelte.js';
+  import Icon from './lib/Icon.svelte';
   import Login from './pages/Login.svelte';
   import Register from './pages/Register.svelte';
   import Dashboard from './pages/Dashboard.svelte';
@@ -10,6 +11,7 @@
   import CvDetail from './pages/CvDetail.svelte';
   import Apply from './pages/Apply.svelte';
   import Result from './pages/Result.svelte';
+  import Profile from './pages/Profile.svelte';
 
   let booted = $state(false);
   const route = $derived(matchRoute(locationState.path));
@@ -43,6 +45,7 @@
     if (!link || !link.href) return;
     const url = new URL(link.href, location.origin);
     if (url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
+    if (url.hash && url.pathname === location.pathname && url.search === location.search) return;
     followLink(event, url.pathname + url.search);
   }
 
@@ -63,9 +66,15 @@
     <a class="wordmark" href="/" onclick={(event) => followLink(event, '/')}>Green Grass</a>
     <nav>
       {#if session.user}
+        <a
+          class="desk-link"
+          href="/"
+          aria-current={route.name === 'home' ? 'page' : undefined}
+          onclick={(event) => followLink(event, '/')}
+        ><Icon name="desk" size={16} /> Desk</a>
         <span class="account" title={session.user.email}>{session.user.email}</span>
         <button type="button" class="text" onclick={signOut}>Sign out</button>
-      {:else}
+      {:else if route.name !== 'profile'}
         <a
           href="/login"
           aria-current={route.name === 'login' ? 'page' : undefined}
@@ -98,6 +107,8 @@
       <Apply cvId={route.cvId} />
     {:else if route.name === 'result'}
       <Result id={route.id} />
+    {:else if route.name === 'profile'}
+      <Profile token={route.token} />
     {:else}
       <section class="stack narrow">
         <h1>That page is not here</h1>

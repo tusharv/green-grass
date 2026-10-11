@@ -54,3 +54,27 @@ class Application(Base):
 
     owner: Mapped[User] = relationship(back_populates="applications")
     cv: Mapped[CV] = relationship(back_populates="applications")
+    share: Mapped["ProfileShare | None"] = relationship(
+        back_populates="application",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class ProfileShare(Base):
+    """Public snapshot of one role check. The private review is not included."""
+
+    __tablename__ = "profile_shares"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    application_id: Mapped[int] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"),
+        unique=True,
+        index=True,
+    )
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    role_title: Mapped[str] = mapped_column(String(200))
+    document_json: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    application: Mapped[Application] = relationship(back_populates="share")

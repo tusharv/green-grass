@@ -1,11 +1,15 @@
 <script>
   import { onMount } from 'svelte';
-  import { api } from '../lib/session.svelte.js';
   import CvSheet from '../lib/CvSheet.svelte';
+  import DeleteControl from '../lib/DeleteControl.svelte';
+  import Icon from '../lib/Icon.svelte';
+  import { navigate } from '../lib/nav.svelte.js';
+  import { api } from '../lib/session.svelte.js';
 
   let { id } = $props();
   let cv = $state(null);
   let error = $state('');
+  let pending = $state('');
 
   onMount(async () => {
     try {
@@ -14,9 +18,34 @@
       error = err.message;
     }
   });
+
+  async function removeCv() {
+    error = '';
+    pending = 'cv';
+    try {
+      await api(`/api/cvs/${id}`, { method: 'DELETE' });
+      navigate('/');
+    } catch (err) {
+      error = err.message;
+      pending = '';
+    }
+  }
+
+  async function removeRole(roleId) {
+    error = '';
+    pending = `role:${roleId}`;
+    try {
+      await api(`/api/applications/${roleId}`, { method: 'DELETE' });
+      cv = { ...cv, versions: cv.versions.filter((version) => version.id !== roleId) };
+    } catch (err) {
+      error = err.message;
+    } finally {
+      pending = '';
+    }
+  }
 </script>
 
-<section class="stack">
+<section class="stack cv-page">
   {#if error}<p class="alert" role="alert">{error}</p>{/if}
   {#if cv}
     <header class="page-head">
@@ -26,26 +55,56 @@
           <p class="meta">{cv.label}</p>
         {/if}
       </div>
-      <a class="button" href="/apply?cv={cv.id}">Check a role</a>
+      <div class="page-actions">
+        <a class="button" href="/apply?cv={cv.id}"><Icon name="role" size={16} /> Check a role</a>
+        <DeleteControl
+          label="Delete {cv.name}"
+          message="Delete this CV and every role checked against it?"
+          pending={pending === 'cv'}
+          ondelete={removeCv}
+        />
+      </div>
     </header>
     <CvSheet document={cv.profile} />
-    <h2>Roles checked</h2>
+    <div class="section-head">
+      <h2><Icon name="role" size={18} /> Roles checked</h2>
+    </div>
     {#if cv.versions?.length}
-      <ul class="list">
+      <ul class="desk-list">
         {#each cv.versions as version (version.id)}
-          <li>
-            <div>
-              <a href="/applications/{version.id}">{version.role_title}</a>
-            </div>
-            <div class="outcome">
-              <p class={version.suitable ? 'ready' : 'gap'}>{version.suitable ? 'Ready to send' : 'Gaps to close'}</p>
-              <p class="outcome-score">{version.fit_score}</p>
+          <li class="record">
+            <a class="record-main" href="/applications/{version.id}">
+              <span class="record-icon {version.suitable ? 'ready' : 'gap'}">
+                <Icon name={version.suitable ? 'ready' : 'gap'} />
+              </span>
+              <span>
+                <span class="record-title">{version.role_title}</span>
+              </span>
+            </a>
+            <div class="record-actions">
+              {#if version.share_path}
+                <a class="button secondary" href={version.share_path}>Employer profile</a>
+              {/if}
+              <span class="pill {version.suitable ? 'ready' : 'gap'}">
+                <Icon name={version.suitable ? 'ready' : 'gap'} size={14} />
+                {version.suitable ? 'Ready to send' : 'Gaps to close'}
+              </span>
+              <span class="score-chip">{version.fit_score}</span>
+              <DeleteControl
+                label="Delete {version.role_title}"
+                message="Delete this role check? The CV stays."
+                pending={pending === `role:${version.id}`}
+                ondelete={() => removeRole(version.id)}
+              />
             </div>
           </li>
         {/each}
       </ul>
     {:else}
-      <p class="empty">No roles checked yet.</p>
+      <div class="empty-card">
+        <span class="record-icon"><Icon name="role" /></span>
+        <p>No roles checked yet. Paste one job description to see if this CV is ready.</p>
+      </div>
     {/if}
   {/if}
 </section>

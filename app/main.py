@@ -1,3 +1,4 @@
+import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -21,7 +22,7 @@ from app.auth import (
 )
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
 from app.database import Base, make_engine, make_session_factory
-from app.models import Application, CV, User
+from app.models import Application, CV, ProfileShare, User
 from app.schemas import CvDocument, GapReport, Profile
 from app.services.llm import ModelError, OllamaCloudClient
 from app.services.parser import UploadError, extract_text
@@ -191,6 +192,17 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = require_user(request, db)
         return _cv_detail(owned_cv(db, user, cv_id))
 
+    @app.delete("/api/cvs/{cv_id}", status_code=204)
+    def delete_cv(cv_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        cv = owned_cv(db, user, cv_id)
+        for row in list(cv.applications):
+            db.delete(row)
+        db.delete(cv)
+        db.commit()
+        return Response(status_code=204)
+
     @app.get("/api/applications")
     def list_applications(request: Request, db: Session = Depends(get_db)):
         user = require_user(request, db)
@@ -246,6 +258,15 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = require_user(request, db)
         return _application_detail(owned_application(db, user, application_id))
 
+    @app.delete("/api/applications/{application_id}", status_code=204)
+    def delete_application(application_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        db.delete(row)
+        db.commit()
+        return Response(status_code=204)
+
     @app.get("/api/applications/{application_id}/pdf")
     def application_pdf(application_id: int, request: Request, db: Session = Depends(get_db)):
         user = require_user(request, db)
@@ -263,6 +284,42 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
+
+    @app.post("/api/applications/{application_id}/profile")
+    def publish_profile(application_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        share = _publish_profile(db, row)
+        return {"share_path": f"/profiles/{share.token}"}
+
+    @app.delete("/api/applications/{application_id}/profile", status_code=204)
+    def unpublish_profile(application_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        if row.share is not None:
+            row.share = None
+            db.commit()
+        return Response(status_code=204)
+
+    @app.get("/api/profiles/{token}")
+    def public_profile(token: str, request: Request, db: Session = Depends(get_db)):
+        share = db.query(ProfileShare).filter(ProfileShare.token == token).one_or_none()
+        if share is None:
+            raise HTTPException(status_code=404, detail="That profile was not found.")
+        document = share.document_json or {}
+        contact = document.get("contact") or {}
+        body = {
+            "name": contact.get("name") or "Candidate",
+            "role_title": share.role_title,
+            "document": document,
+        }
+        user = current_user(request, db)
+        if user is not None and share.application is not None and share.application.user_id == user.id:
+            body["cv_id"] = share.application.cv_id
+            body["application_id"] = share.application.id
+        return body
 
     @app.get("/")
     @app.get("/{full_path:path}")
@@ -284,6 +341,42 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     return app
 
 
+def _candidate_name(row: Application) -> str:
+    contact = (row.cv.profile_json or {}).get("contact") or {}
+    return contact.get("name") or row.cv.label
+
+
+def _employer_document(row: Application) -> dict:
+    """Facts an employer can read. A gap result keeps the saved profile, not a rewrite."""
+    raw = row.cv.profile_json or {}
+    if row.suitable and (row.result_json or {}).get("kind") == "cv":
+        raw = row.result_json.get("document") or raw
+    profile = Profile.model_validate(raw)
+    return CvDocument(
+        contact=profile.contact,
+        summary=profile.summary,
+        skills=profile.skills,
+        experience=profile.experience,
+        education=profile.education,
+    ).model_dump()
+
+
+def _publish_profile(db: Session, row: Application) -> ProfileShare:
+    if row.share is not None:
+        row.share = None
+        db.flush()
+    share = ProfileShare(
+        application_id=row.id,
+        token=secrets.token_urlsafe(18),
+        role_title=row.role_title,
+        document_json=_employer_document(row),
+    )
+    row.share = share
+    db.commit()
+    db.refresh(row)
+    return row.share
+
+
 def _cv_summary(row: CV) -> dict:
     profile = row.profile_json or {}
     contact = profile.get("contact") or {}
@@ -297,7 +390,7 @@ def _cv_summary(row: CV) -> dict:
 
 def _cv_detail(row: CV) -> dict:
     versions = sorted(row.applications, key=lambda item: item.created_at, reverse=True)
-    return {**_cv_summary(row), "profile": row.profile_json, "versions": [_application_summary(item) for item in versions]}
+    return {**_cv_summary(row), "profile": row.profile_json, "versions": [_version_summary(item) for item in versions]}
 
 
 def _application_summary(row: Application) -> dict:
@@ -311,9 +404,17 @@ def _application_summary(row: Application) -> dict:
     }
 
 
+def _version_summary(row: Application) -> dict:
+    summary = _application_summary(row)
+    if row.share is not None:
+        summary["share_path"] = f"/profiles/{row.share.token}"
+    return summary
+
+
 def _application_detail(row: Application) -> dict:
     return {
-        **_application_summary(row),
+        **_version_summary(row),
+        "candidate_name": _candidate_name(row),
         "skill_board": row.skill_board_json,
         "result": row.result_json,
     }

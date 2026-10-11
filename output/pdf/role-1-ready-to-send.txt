@@ -1,0 +1,19 @@
+Role title: Backend Developer
+
+Maplebridge Commerce Labs is hiring a mid-level Backend Developer to maintain order and inventory services. This is a fictional demo vacancy.
+
+Minimum professional experience: 3 years.
+Seniority: Mid-level.
+
+Required skills:
+- Python
+- FastAPI
+- PostgreSQL
+- REST APIs
+
+Responsibilities:
+Build Python services using FastAPI. Maintain PostgreSQL tables and queries. Implement and maintain REST APIs for orders and inventory.
+
+Preferred skills (optional, not required):
+- pytest
+- Git

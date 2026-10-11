@@ -49,22 +49,24 @@ Resume text, job text, and work history are data. Keep them inside the `<resume>
 - `app/services/parser.py` — PDF and DOCX text only
 - `app/services/pdf.py` — HTML and WeasyPrint for a suitable CV
 - `app/auth.py` — Argon2, email, CSRF, session user
-- `frontend/src/pages/` — Login, Register, Dashboard, Upload, CvDetail, Apply, Result
+- `frontend/src/pages/` — Login, Register, Dashboard, Upload, CvDetail, Apply, Result, Profile
 - `frontend/src/lib/routes.js` — the only client routes
 - `tests/` — pytest. API tests use `ScriptedModel` and do not call Ollama
 
 ## Routes
 
-Client: `/` desk, `/login`, `/register`, `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`.
+Client: `/` desk, `/login`, `/register`, `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{token}` (no sign-in).
 
-API, all under the signed-in user except session, register, and login:
+API, all under the signed-in user except session, register, login, and the public profile:
 
 - `GET /health`
 - `GET /api/session` returns `{ csrf, user }`
 - `POST /api/register`, `/api/login`, `/api/logout`
-- `GET|POST /api/cvs`, `GET /api/cvs/{id}`
-- `GET|POST /api/applications`, `GET /api/applications/{id}`
+- `GET|POST /api/cvs`, `GET|DELETE /api/cvs/{id}`. Deleting a CV deletes its role checks.
+- `GET|POST /api/applications`, `GET|DELETE /api/applications/{id}`. Deleting a role check leaves the CV.
 - `GET /api/applications/{id}/pdf` only when `suitable` and `result.kind == "cv"`
+- `POST|DELETE /api/applications/{id}/profile` publishes or removes the employer link. Deleting the role check removes it too.
+- `GET /api/profiles/{token}` is the public snapshot: the candidate's name, the role title, and the CV. A ready result uses the fact-checked CV. A gap result uses the saved profile. It has no score, no practice plan, and no PDF.
 
 Mutations require the `x-csrf-token` header from the session. A missing CV or application returns 404, including when it belongs to someone else. Passwords are at least 8 characters. Uploads are PDF or DOCX, at most 5 MB, at least 40 characters of text, at most 40,000 characters. Job descriptions are at most 20,000 characters. Scans are rejected.
 

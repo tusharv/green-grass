@@ -1,0 +1,40 @@
+{
+  "contact": {
+    "name": "Alex Morgan",
+    "email": "alex.morgan@example.com",
+    "location": "Pune, India"
+  },
+  "summary": "Backend developer with 4 years of professional experience building order and inventory services using Python, FastAPI, and PostgreSQL.",
+  "skills": [
+    "Python",
+    "FastAPI",
+    "PostgreSQL",
+    "REST APIs",
+    "pytest",
+    "Git"
+  ],
+  "years_experience": 4,
+  "experience": [
+    {
+      "employer": "Maplebridge Retail Systems (fictional)",
+      "title": "Backend Developer",
+      "start": "July 2022",
+      "end": "June 2026",
+      "bullets": [
+        "Built Python services to validate customer orders and automate daily inventory reconciliation.",
+        "Developed FastAPI endpoints for order creation, status updates, and inventory lookups.",
+        "Designed PostgreSQL tables and queries for order history, stock levels, and customer records.",
+        "Implemented REST API request validation, pagination, and consistent error responses for order services.",
+        "Wrote pytest unit and integration tests for order validation, API responses, and database operations.",
+        "Used Git branches and pull requests to review changes and maintain the shared backend codebase."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "school": "Westfield Institute of Technology (fictional)",
+      "credential": "BSc Computer Science",
+      "year": "2022"
+    }
+  ]
+}

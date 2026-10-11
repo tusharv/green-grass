@@ -132,4 +132,7 @@ def score_fit(
         required=list(required),
         preferred=list(preferred),
         matched_preferred=[mark.name for mark in preferred if mark.present],
+        years_shown=float(profile.years_experience or 0),
+        years_needed=years_needed,
+        years_score=years_score,
     )

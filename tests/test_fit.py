@@ -154,6 +154,25 @@ def test_no_required_skills_is_not_suitable():
     assert fit.required == []
 
 
+def test_review_explains_experience_against_seniority_floor():
+    job = JobExtract(required_skills=["Python"], min_years=2, seniority="senior")
+    profile = SAMPLE_PROFILE.model_copy(update={"years_experience": 3})
+    fit = score_fit(profile, job, [SkillMark(name="Python", present=True)], [])
+    review = fit.model_dump()
+    assert review["years_shown"] == 3
+    assert review["years_needed"] == 5
+    assert review["years_score"] == 0.6
+    assert fit.score == 88
+
+
+def test_review_does_not_invent_missing_experience():
+    fit = score_fit(Profile(), JobExtract(required_skills=["Python"], seniority="mid"), [], [])
+    review = fit.model_dump()
+    assert review["years_shown"] == 0
+    assert review["years_needed"] == 3
+    assert review["years_score"] == 0
+
+
 def test_empty_profile_matches_nothing():
     required, preferred = accept_screen(Profile(), suitable_job(), _screen([("Python", LONG_BULLET), ("SQL", LONG_BULLET)]))
     fit = score_fit(Profile(), suitable_job(), required, preferred)

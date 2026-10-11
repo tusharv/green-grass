@@ -218,6 +218,11 @@ def test_suitable_role_saves_a_polished_cv(tmp_path):
     assert UPSKILL not in model.calls
     quote = body["skill_board"]["required"][0]["quote"]
     assert quote == EVIDENCE
+    saved = client.get(f"/api/applications/{body['id']}").json()["skill_board"]
+    assert saved["required"][0]["quote"] == EVIDENCE
+    assert saved["years_shown"] == 5
+    assert saved["years_needed"] == 3
+    assert saved["years_score"] == 1
 
 
 def test_gap_role_saves_upskilling_and_no_pdf(tmp_path):
@@ -316,6 +321,55 @@ def test_posting_without_required_skills_skips_screening(tmp_path):
     assert SCREEN not in model.calls
 
 
+def test_owner_can_delete_a_role_and_a_cv(tmp_path):
+    model = ScriptedModel(suitable_job().model_dump(), rewrite=REWRITE)
+    client = _client(tmp_path, model)
+    _register(client)
+    cv_id = _upload(client)
+    created = client.post(
+        "/api/applications",
+        json={"cv_id": cv_id, "role_title": "Programmer", "job_description": "Required: Python and SQL."},
+        headers=_headers(_csrf(client)),
+    )
+    assert created.status_code == 201, created.text
+    application_id = created.json()["id"]
+
+    client.post("/api/logout", headers=_headers(_csrf(client)))
+    _register(client, "other@example.com")
+    denied_role = client.delete(f"/api/applications/{application_id}", headers=_headers(_csrf(client)))
+    denied_cv = client.delete(f"/api/cvs/{cv_id}", headers=_headers(_csrf(client)))
+    assert denied_role.status_code == 404
+    assert denied_cv.status_code == 404
+
+    client.post("/api/logout", headers=_headers(_csrf(client)))
+    client.post(
+        "/api/login",
+        json={"email": "ada@example.com", "password": "correct-horse"},
+        headers=_headers(_csrf(client)),
+    )
+    missing_token = client.delete(f"/api/applications/{application_id}")
+    assert missing_token.status_code == 403
+    assert client.get(f"/api/applications/{application_id}").status_code == 200
+
+    removed_role = client.delete(f"/api/applications/{application_id}", headers=_headers(_csrf(client)))
+    assert removed_role.status_code == 204
+    assert client.get(f"/api/applications/{application_id}").status_code == 404
+    assert client.get(f"/api/cvs/{cv_id}").status_code == 200
+
+    again = client.post(
+        "/api/applications",
+        json={"cv_id": cv_id, "role_title": "Analyst", "job_description": "Required: Python and SQL."},
+        headers=_headers(_csrf(client)),
+    )
+    assert again.status_code == 201, again.text
+    removed_cv = client.delete(f"/api/cvs/{cv_id}", headers=_headers(_csrf(client)))
+    assert removed_cv.status_code == 204
+    assert client.get(f"/api/cvs/{cv_id}").status_code == 404
+    assert client.get(f"/api/applications/{again.json()['id']}").status_code == 404
+    assert client.get("/api/cvs").json() == []
+    assert client.get("/api/applications").json() == []
+
+
 def test_csrf_is_required(tmp_path):
     client = _client(tmp_path, ScriptedModel(suitable_job().model_dump()))
     response = client.post(
@@ -323,3 +377,135 @@ def test_csrf_is_required(tmp_path):
         json={"email": "ada@example.com", "password": "correct-horse"},
     )
     assert response.status_code == 403
+
+
+def test_employer_profile_is_the_saved_cv_without_the_practice_plan(tmp_path):
+    model = ScriptedModel(gap_job().model_dump(), gap=GAP, screen=None)
+    settings = Settings(
+        database_url=f"sqlite:///{tmp_path / 'test.db'}",
+        session_secret="test-secret",
+        ollama_api_key="test-key",
+        cookie_secure=False,
+    )
+    app = create_app(settings, model=model)
+    owner = TestClient(app)
+    guest = TestClient(app)
+    _register(owner)
+    cv_id = _upload(owner)
+    created = owner.post(
+        "/api/applications",
+        json={
+            "cv_id": cv_id,
+            "role_title": "Platform engineer",
+            "job_description": "Required: Kubernetes and Rust.",
+        },
+        headers=_headers(_csrf(owner)),
+    )
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["candidate_name"] == "Ada Lovelace"
+    assert body["cv_id"] == cv_id
+    assert "share_path" not in body
+    application_id = body["id"]
+
+    assert guest.get("/api/profiles/not-a-real-token").status_code == 404
+    assert owner.post(f"/api/applications/{application_id}/profile").status_code == 403
+    assert owner.get(f"/api/applications/{application_id}").json().get("share_path") is None
+
+    published = owner.post(
+        f"/api/applications/{application_id}/profile",
+        headers=_headers(_csrf(owner)),
+    )
+    assert published.status_code == 200, published.text
+    share_path = published.json()["share_path"]
+    token = share_path.rsplit("/", 1)[-1]
+    detail = owner.get(f"/api/applications/{application_id}").json()
+    assert detail["candidate_name"] == "Ada Lovelace"
+    assert detail["share_path"] == share_path
+    versions = owner.get(f"/api/cvs/{cv_id}").json()["versions"]
+    assert versions[0]["share_path"] == share_path
+
+    public = guest.get(f"/api/profiles/{token}")
+    assert public.status_code == 200, public.text
+    snapshot = public.json()
+    assert snapshot["name"] == "Ada Lovelace"
+    assert snapshot["role_title"] == "Platform engineer"
+    assert snapshot["document"]["summary"] == SAMPLE_PROFILE.summary
+    assert snapshot["document"]["contact"]["email"] == "ada@example.com"
+    assert "years_experience" not in snapshot["document"]
+    assert "application_id" not in snapshot
+    assert "skill_board" not in snapshot
+    assert "Kubernetes" not in json.dumps(snapshot)
+    assert guest.get(f"/api/applications/{application_id}").status_code == 401
+
+    owned = owner.get(f"/api/profiles/{token}").json()
+    assert owned["cv_id"] == cv_id
+    assert owned["application_id"] == application_id
+
+    owner.post("/api/logout", headers=_headers(_csrf(owner)))
+    _register(owner, "other@example.com")
+    assert owner.post(
+        f"/api/applications/{application_id}/profile",
+        headers=_headers(_csrf(owner)),
+    ).status_code == 404
+    assert guest.get(f"/api/profiles/{token}").status_code == 200
+
+    owner.post("/api/logout", headers=_headers(_csrf(owner)))
+    owner.post(
+        "/api/login",
+        json={"email": "ada@example.com", "password": "correct-horse"},
+        headers=_headers(_csrf(owner)),
+    )
+    stopped = owner.delete(
+        f"/api/applications/{application_id}/profile",
+        headers=_headers(_csrf(owner)),
+    )
+    assert stopped.status_code == 204
+    assert guest.get(f"/api/profiles/{token}").status_code == 404
+
+    again = owner.post(
+        f"/api/applications/{application_id}/profile",
+        headers=_headers(_csrf(owner)),
+    )
+    assert again.status_code == 200, again.text
+    new_token = again.json()["share_path"].rsplit("/", 1)[-1]
+    assert new_token != token
+    assert guest.get(f"/api/profiles/{token}").status_code == 404
+    assert guest.get(f"/api/profiles/{new_token}").status_code == 200
+
+    removed = owner.delete(
+        f"/api/applications/{application_id}",
+        headers=_headers(_csrf(owner)),
+    )
+    assert removed.status_code == 204
+    assert guest.get(f"/api/profiles/{new_token}").status_code == 404
+    assert owner.get(f"/api/cvs/{cv_id}").status_code == 200
+
+
+def test_ready_profile_uses_the_fact_checked_cv(tmp_path):
+    model = ScriptedModel(suitable_job().model_dump(), rewrite=REWRITE)
+    client = _client(tmp_path, model)
+    guest = TestClient(client.app)
+    _register(client)
+    cv_id = _upload(client)
+    created = client.post(
+        "/api/applications",
+        json={"cv_id": cv_id, "role_title": "Programmer", "job_description": "Required: Python and SQL."},
+        headers=_headers(_csrf(client)),
+    )
+    assert created.status_code == 201, created.text
+    published = client.post(
+        f"/api/applications/{created.json()['id']}/profile",
+        headers=_headers(_csrf(client)),
+    )
+    assert published.status_code == 200, published.text
+    token = published.json()["share_path"].rsplit("/", 1)[-1]
+    snapshot = guest.get(f"/api/profiles/{token}").json()
+    assert snapshot["name"] == "Ada Lovelace"
+    assert snapshot["role_title"] == "Programmer"
+    assert snapshot["document"]["summary"] == REWRITE["summary"]
+    assert snapshot["document"]["experience"][0]["employer"] == "Analytical Engines"
+    assert "fit_score" not in snapshot
+    removed = client.delete(f"/api/cvs/{cv_id}", headers=_headers(_csrf(client)))
+    assert removed.status_code == 204
+    assert guest.get(f"/api/profiles/{token}").status_code == 404

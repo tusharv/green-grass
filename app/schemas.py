@@ -54,6 +54,9 @@ class FitResult(BaseModel):
     required: list[SkillMark]
     preferred: list[SkillMark] = Field(default_factory=list)
     matched_preferred: list[str] = Field(default_factory=list)
+    years_shown: float | None = None
+    years_needed: float | None = None
+    years_score: float | None = None
 
 
 class SkillQuote(BaseModel):

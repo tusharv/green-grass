@@ -1,0 +1,19 @@
+Role title: Senior Cloud Platform Engineer
+
+Harborlight Infrastructure is hiring a Senior Cloud Platform Engineer to operate cloud infrastructure. This is a fictional demo vacancy.
+
+Minimum professional experience: 5 years.
+Seniority: Senior.
+
+Required skills:
+- AWS
+- Kubernetes
+- Terraform
+- Prometheus
+
+Responsibilities:
+Operate services on AWS. Manage Kubernetes clusters. Provision infrastructure using Terraform. Build infrastructure monitoring with Prometheus.
+
+Preferred skills (optional, not required):
+- Helm
+- Argo CD
