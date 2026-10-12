@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Expand the Green Grass presentation deck in `/presentation/` to 9 cohesive, narrative slides adding "What's Green Grass", "What Problem It's Solving", "Why a Job-Specific CV Matters", "Deterministic Code Engine", "Actionable Practice Roadmap", and "Verified Public Snapshots".
+**Goal:** Expand the Job Ready presentation deck in `/presentation/` to 9 cohesive, narrative slides adding "What's Job Ready", "What Problem It's Solving", "Why a Job-Specific CV Matters", "Deterministic Code Engine", "Actionable Practice Roadmap", and "Verified Public Snapshots".
 
 **Architecture:** Multi-page static HTML slides (`index.html` through `honest.html`) connected by bi-directional arrow key navigation (`data-prev` / `data-next` in `deck.js`), unified pagination (`X of 9`), responsive CSS grid layouts (`.cards-3`, `.step`, `.sheet`), and botanical typography (`Literata` + `Atkinson Hyperlegible`). Automated integrity tests in `tests/test_presentation.py` verify link chains, content assertions, and keyboard bindings.
 
@@ -15,7 +15,7 @@
 - **Create**: `tests/test_presentation.py` — Automated verification suite for the presentation deck (slide existence, unbroken navigation chain, content checks, footer counters).
 - **Modify**: `presentation/deck.css` — Styling for 3-column card grid (`.cards-3`, `.card`), formula badges (`.formula`), and responsive layout.
 - **Modify**: `presentation/deck.js` — Keyboard navigation (`Home` to `index.html`, `End` to `honest.html`, `ArrowLeft`/`ArrowRight`).
-- **Modify**: `presentation/index.html` — Slide 1: "What is Green Grass", link to `problem.html`, `1 of 9` footer.
+- **Modify**: `presentation/index.html` — Slide 1: "What is Job Ready", link to `problem.html`, `1 of 9` footer.
 - **Create**: `presentation/problem.html` — Slide 2: "The Problem It Solves" (spray-and-pray, AI hallucinations, silent rejections), `2 of 9` footer.
 - **Create**: `presentation/why-specific.html` — Slide 3: "Why a Job-Specific CV Matters" (6–7 second scans, evidence over buzzwords, honest alignment), `3 of 9` footer.
 - **Modify**: `presentation/who.html` — Slide 4: Update links (`data-prev="why-specific.html" data-next="check.html"`), `4 of 9` footer.
@@ -83,9 +83,9 @@ def test_presentation_files_exist_and_chain_correctly():
 
 
 def test_presentation_key_content():
-    # Slide 1: What is Green Grass
+    # Slide 1: What is Job Ready
     slide1 = (PRESENTATION_DIR / "index.html").read_text(encoding="utf-8")
-    assert "What is Green Grass" in slide1
+    assert "What is Job Ready" in slide1
 
     # Slide 2: Problem
     slide2 = (PRESENTATION_DIR / "problem.html").read_text(encoding="utf-8")
@@ -243,9 +243,9 @@ git commit -m "style: add cards-3, card, and formula styles to deck.css"
 
 Update `presentation/index.html` with:
 - `data-next="problem.html"`
-- Eyebrow: `What is Green Grass`
+- Eyebrow: `What is Job Ready`
 - Pitch: `Your CV is either ready to send, or you get what to practice.`
-- Lede: `Green Grass is an honest CV evaluation platform. It verifies your real experience against one specific job posting in code—polishing your wording if you clear the bar, or providing a targeted practice plan if you have gaps. It never invents experience.`
+- Lede: `Job Ready is an honest CV evaluation platform. It verifies your real experience against one specific job posting in code—polishing your wording if you clear the bar, or providing a targeted practice plan if you have gaps. It never invents experience.`
 - CTA: `<a class="button" href="problem.html">The Problem It Solves</a>`
 - Footer: `1 of 9`, Next: `problem.html`
 
@@ -362,7 +362,7 @@ Create `presentation/roadmap.html` with:
 - `data-prev="outcomes.html" data-next="honest.html"`
 - Eyebrow: `Practice Plan`
 - Title: `An Actionable Roadmap Over an Empty Rejection.`
-- Lede: `Traditional applications end in silence or generic automated rejections. Green Grass turns a gap into a clear path forward:`
+- Lede: `Traditional applications end in silence or generic automated rejections. Job Ready turns a gap into a clear path forward:`
 - Three cards in `.cards-3`:
   1. `Major vs. Minor Gaps`: Missing required skills are prioritized as Major Gaps; missing preferred skills as Minor Gaps. Candidates know exactly what is blocking suitability.
   2. `Clear Context on Why It Matters`: Plain-English explanation of why the role specifically demands the skill and how it connects to day-to-day engineering duties.

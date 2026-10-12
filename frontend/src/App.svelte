@@ -65,12 +65,16 @@
   }
 </script>
 
+<svelte:head>
+  <title>{route.name === 'home' && !session.user ? 'Job Ready | Your next role. An honest next step.' : 'Job Ready'}</title>
+</svelte:head>
+
 <div class="frame" class:bare={route.name === 'profile'} class:landing-frame={route.name === 'home' && !session.user}>
   {#if route.name !== 'profile'}
   <header class="bar">
     <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
       <BrandLogo size={28} />
-      <span class="wordmark">Green Grass</span>
+      <span class="wordmark">Job Ready</span>
     </a>
     <nav>
       {#if session.user}

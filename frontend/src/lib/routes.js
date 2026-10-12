@@ -1,5 +1,5 @@
 export function matchRoute(full) {
-  const url = new URL(full || '/', 'http://green-grass.local');
+  const url = new URL(full || '/', 'https://jobready.tech');
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const cv = url.searchParams.get('cv');
 

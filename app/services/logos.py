@@ -12,7 +12,7 @@ import re
 import httpx
 
 # Wikimedia returns 403 to clients whose User-Agent has no contact URL or email.
-USER_AGENT = 'GreenGrass/1.0 (https://github.com/tusharv/green-grass; company logo lookup)'
+USER_AGENT = 'JobReady/1.0 (https://jobready.tech; company logo lookup)'
 
 
 class CompanyLogos:

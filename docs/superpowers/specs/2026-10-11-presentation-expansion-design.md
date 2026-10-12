@@ -1,9 +1,9 @@
-# Presentation Expansion Design Spec: What Green Grass Is, Problems Solved, Job-Specific CV Value, and Trust Architecture
+# Presentation Expansion Design Spec: What Job Ready Is, Problems Solved, Job-Specific CV Value, and Trust Architecture
 
 ## Overview
 
 Expand the standalone HTML slide deck in `/presentation/` from 5 slides to 9 cohesive, narrative slides. This update incorporates:
-1. **What is Green Grass**: The core value proposition—an honest CV evaluator and practice generator that verifies genuine experience in code and refuses to fabricate skills.
+1. **What is Job Ready**: The core value proposition—an honest CV evaluator and practice generator that verifies genuine experience in code and refuses to fabricate skills.
 2. **The Problem It Solves**: The broken hiring pipeline—generic mass-application spam, hallucinating AI resume builders that lie, and uninformative automated rejections.
 3. **Why a Job-Specific CV Matters**: The 6-second recruiter reality, proof-driven relevance over keyword stuffing, and honest alignment with role context.
 4. **Deep-Dive Mechanics ("More")**:
@@ -19,7 +19,7 @@ The presentation follows a 9-slide sequence with bi-directional navigation, keyb
 
 | # | File Name | Title & Eyebrow | Prev Slide | Next Slide | Key Concept & Purpose |
 |---|---|---|---|---|---|
-| 1 | `index.html` | What is Green Grass | *(Home)* | `problem.html` | Core thesis: Ready to send or what to practice. Refuses to invent skills. |
+| 1 | `index.html` | What is Job Ready | *(Home)* | `problem.html` | Core thesis: Ready to send or what to practice. Refuses to invent skills. |
 | 2 | `problem.html` | The Problem It Solves | `index.html` | `why-specific.html` | The spray-and-pray trap, lying AI tools, and silent rejections. |
 | 3 | `why-specific.html` | Why a Job-Specific CV Matters | `problem.html` | `who.html` | 6–7 second recruiter scans, relevance vs. volume, authentic alignment. |
 | 4 | `who.html` | Who It Helps | `why-specific.html` | `check.html` | Three candidate mindsets: applying this week, close to role, not close yet. |
@@ -33,12 +33,12 @@ The presentation follows a 9-slide sequence with bi-directional navigation, keyb
 
 ## Detailed Slide Specifications
 
-### Slide 1: `index.html` — What is Green Grass
+### Slide 1: `index.html` — What is Job Ready
 - **File**: `presentation/index.html`
 - **Body Attributes**: `data-next="problem.html"`
-- **Eyebrow (`.say`)**: `What is Green Grass`
+- **Eyebrow (`.say`)**: `What is Job Ready`
 - **Headline (`h1.pitch`)**: `Your CV is either ready to send, or you get what to practice.`
-- **Lede (`.lede`)**: `Green Grass is an honest CV evaluation platform. It verifies your real experience against one specific job posting in code—polishing your wording if you clear the bar, or providing a targeted practice plan if you have gaps. It never invents experience.`
+- **Lede (`.lede`)**: `Job Ready is an honest CV evaluation platform. It verifies your real experience against one specific job posting in code—polishing your wording if you clear the bar, or providing a targeted practice plan if you have gaps. It never invents experience.`
 - **Side Card**: Example fit check showing Python (Have), SQL (Have), Kubernetes (Gap).
 - **CTA Button**: `<a class="button" href="problem.html">The Problem It Solves</a>`
 - **Footer**: `1 of 9` | Next: `problem.html`
@@ -117,7 +117,7 @@ The presentation follows a 9-slide sequence with bi-directional navigation, keyb
 - **Body Attributes**: `data-prev="outcomes.html" data-next="honest.html"`
 - **Eyebrow (`.say`)**: `Practice Plan`
 - **Headline (`h1`)**: `An Actionable Roadmap Over an Empty Rejection.`
-- **Lede (`.lede`)**: `Traditional applications end in silence or automated rejections. Green Grass turns a gap into a clear path forward:`
+- **Lede (`.lede`)**: `Traditional applications end in silence or automated rejections. Job Ready turns a gap into a clear path forward:`
 - **Content Grid (`.cards-3`)**:
   1. **Major vs. Minor Prioritization**: Missing required skills are prioritized as Major Gaps; missing preferred skills as Minor Gaps. Candidates know what blocks suitability.
   2. **Clear Context on Why It Matters**: Breaks down why the role specifically demands the skill and how it connects to day-to-day engineering duties.
@@ -170,7 +170,7 @@ The presentation follows a 9-slide sequence with bi-directional navigation, keyb
    - `ArrowLeft` reverses all steps back to `index.html`.
    - `Home` always loads `index.html`; `End` always loads `honest.html`.
 2. **Content Coverage**:
-   - What is Green Grass is clearly articulated on Slide 1.
+   - What is Job Ready is clearly articulated on Slide 1.
    - The problems of spray-and-pray, AI hallucinations, and silent rejections are articulated on Slide 2.
    - The rationale for job-specific CVs is articulated on Slide 3.
    - The deterministic engine (formula, quote rule, seniority floors) is articulated on Slide 6.

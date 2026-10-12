@@ -1,6 +1,6 @@
-# Green Grass
+# Job Ready
 
-Green Grass checks one CV against one job. A signed-in person uploads a text PDF or DOCX, pastes a role, and gets one of two honest results: a fact-checked CV they can download as a PDF, or a practice plan for required skills the work history does not show.
+Job Ready, at [jobready.tech](https://jobready.tech), checks one CV against one job. A signed-in person uploads a text PDF or DOCX, pastes a role, and gets one of two honest results: a fact-checked CV they can download as a PDF, or a practice plan for required skills the work history does not show.
 
 The model extracts structure and rewrites wording. It does not decide whether the CV is ready, and it does not invent employers, titles, dates, degrees, tools, or numbers. Suitability is scored in code.
 

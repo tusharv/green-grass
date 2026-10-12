@@ -1,4 +1,4 @@
-# Green Grass demo
+# Job Ready demo
 
 All people, employers, schools, and vacancies in this pack are fictional.
 

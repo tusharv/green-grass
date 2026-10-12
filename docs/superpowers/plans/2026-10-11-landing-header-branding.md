@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the official Green Grass logo mark to the application header across all pages and enrich the logged-in user experience with an avatar account chip in the header and a personalized welcome card on the Desk landing page.
+**Goal:** Add the official Job Ready logo mark to the application header across all pages and enrich the logged-in user experience with an avatar account chip in the header and a personalized welcome card on the Desk landing page.
 
-**Architecture:** Create a reusable `BrandLogo.svelte` SVG component matching the emerald-and-grass branding. Integrate this component into `App.svelte` alongside the existing wordmark. Add a helper for extracting user initials, render a styled `.user-chip` in the header, and add a personalized `.desk-welcome` card to `Dashboard.svelte`. Update `app.css` with responsive, accessible styling conforming to Green Grass design tokens.
+**Architecture:** Create a reusable `BrandLogo.svelte` SVG component matching the emerald-and-grass branding. Integrate this component into `App.svelte` alongside the existing wordmark. Add a helper for extracting user initials, render a styled `.user-chip` in the header, and add a personalized `.desk-welcome` card to `Dashboard.svelte`. Update `app.css` with responsive, accessible styling conforming to Job Ready design tokens.
 
 **Tech Stack:** Svelte 5 (runes: `$state`, `$derived`, `$props`), CSS3, Vite, Python/FastAPI backend test suite.
 
@@ -115,11 +115,11 @@ In `frontend/src/App.svelte`:
 1. Import `BrandLogo` from `./lib/BrandLogo.svelte` and `getInitials` from `./lib/user.js`.
 2. Compute `userInitials` via `$derived(getInitials(session.user?.email))`.
 3. Update `.bar`:
-   - Replace `<a class="wordmark" ...>Green Grass</a>` with:
+   - Replace `<a class="wordmark" ...>Job Ready</a>` with:
      ```svelte
      <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
        <BrandLogo size={28} />
-       <span class="wordmark">Green Grass</span>
+       <span class="wordmark">Job Ready</span>
      </a>
      ```
    - In `<nav>` for authenticated user:

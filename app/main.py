@@ -60,7 +60,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         Base.metadata.create_all(engine)
         yield
 
-    app = FastAPI(title="Green Grass", lifespan=lifespan)
+    app = FastAPI(title="Job Ready", lifespan=lifespan)
     app.state.settings = settings
     app.state.engine = engine
     app.state.Session = session_factory

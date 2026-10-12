@@ -1,1 +1,1 @@
-"""Green Grass: role-aligned CVs for job seekers."""
+"""Job Ready: role-aligned CVs for job seekers."""

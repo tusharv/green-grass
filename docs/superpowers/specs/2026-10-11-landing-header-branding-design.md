@@ -2,14 +2,14 @@
 
 ## Overview
 
-Make sure the landing page (Desk workspace) and the global application header feature the official Green Grass logo and clear, polished logged-in user information.
+Make sure the landing page (Desk workspace) and the global application header feature the official Job Ready logo and clear, polished logged-in user information.
 
 ## Decisions
 
 1. **Brand Identity & Logo:**
-   - Create a reusable `frontend/src/lib/BrandLogo.svelte` component displaying the official Green Grass emblem (emerald rounded square tile `#1b6b45` with the three stylized curved grass blades `#f4faf6`).
+   - Create a reusable `frontend/src/lib/BrandLogo.svelte` component displaying the official Job Ready emblem (emerald rounded square tile `#1b6b45` with the three stylized curved grass blades `#f4faf6`).
    - The logo accepts an optional `size` prop (default `28` pixels).
-   - In the header, replace the plain text wordmark with a unified brand lockup: `<BrandLogo size={28} />` paired with `<span class="wordmark">Green Grass</span>` linking to `/`.
+   - In the header, replace the plain text wordmark with a unified brand lockup: `<BrandLogo size={28} />` paired with `<span class="wordmark">Job Ready</span>` linking to `/`.
 
 2. **Header User Account Chip (`frontend/src/App.svelte`):**
    - When signed in, the header displays:

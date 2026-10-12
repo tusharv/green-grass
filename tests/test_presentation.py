@@ -47,9 +47,9 @@ def test_presentation_files_exist_and_chain_correctly():
 
 
 def test_presentation_key_content():
-    # Slide 1: What is Green Grass
+    # Slide 1: What is Job Ready
     slide1 = (PRESENTATION_DIR / "index.html").read_text(encoding="utf-8")
-    assert "What is Green Grass" in slide1
+    assert "What is Job Ready" in slide1
 
     # Slide 2: Problem
     slide2 = (PRESENTATION_DIR / "problem.html").read_text(encoding="utf-8")
@@ -99,7 +99,7 @@ def test_presentation_routes_served_by_api():
     # /presentation/ returns index.html
     res = client.get("/presentation/")
     assert res.status_code == 200
-    assert "What is Green Grass" in res.text
+    assert "What is Job Ready" in res.text
 
     # /presentation/problem.html returns problem.html
     res = client.get("/presentation/problem.html")

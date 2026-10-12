@@ -4,15 +4,11 @@
   import Icon from '../lib/Icon.svelte';
 
   const steps = [
-    { title: 'Start with your experience.', text: 'Upload your existing CV as a text PDF or DOCX. Green Grass reads your skills, work history, and education.' },
+    { title: 'Start with your experience.', text: 'Upload your existing CV as a text PDF or DOCX. Job Ready reads your skills, work history, and education.' },
     { title: 'Bring one role into focus.', text: 'Paste the role title and job description. We check the requirements against the experience already on your CV.' },
     { title: 'Know your next step.', text: 'Get a fact-checked CV when you meet the bar, or a focused practice plan when there are gaps to close.' },
   ];
 </script>
-
-<svelte:head>
-  <title>Green Grass | Your next role. An honest next step.</title>
-</svelte:head>
 
 <div class="landing">
   <section class="landing-hero" aria-labelledby="landing-title">
@@ -32,7 +28,7 @@
 
   <section class="landing-intro" aria-labelledby="intro-title">
     <h2 id="intro-title">A better application starts<br />with the experience you have.</h2>
-    <p>Green Grass helps you see how your CV fits a specific job. It brings your relevant experience forward and makes the missing skills clear, so you can choose your next step with confidence.</p>
+    <p>Job Ready helps you see how your CV fits a specific job. It brings your relevant experience forward and makes the missing skills clear, so you can choose your next step with confidence.</p>
   </section>
 
   <section id="how-it-works" class="landing-process" aria-labelledby="process-title">
@@ -86,7 +82,7 @@
   <section class="landing-principle" aria-labelledby="principle-title">
     <span class="principle-mark" aria-hidden="true"><Icon name="cv" size={30} /></span>
     <h2 id="principle-title">Better wording.<br />Always your real story.</h2>
-    <p>Your employers, titles, dates, and qualifications stay yours. Every rewrite is checked against your saved profile. Green Grass won’t invent experience to make a role look like a fit.</p>
+    <p>Your employers, titles, dates, and qualifications stay yours. Every rewrite is checked against your saved profile. Job Ready won’t invent experience to make a role look like a fit.</p>
   </section>
 
   <section class="landing-faq" aria-labelledby="faq-title">
@@ -98,7 +94,7 @@
       </details>
       <details>
         <summary>What happens to my original file?</summary>
-        <p>The original upload isn’t stored. Green Grass saves the extracted text and a structured profile so you can check your experience against different roles.</p>
+        <p>The original upload isn’t stored. Job Ready saves the extracted text and a structured profile so you can check your experience against different roles.</p>
       </details>
       <details>
         <summary>Does AI decide whether I’m ready?</summary>
@@ -112,7 +108,7 @@
   </section>
 
   <footer class="landing-footer">
-    <p>Green Grass <span>A clearer next chapter.</span></p>
+    <p>Job Ready <span>jobready.tech</span></p>
     <a href="/login">Already have an account? Sign in <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
@@ -188,7 +184,7 @@
     .landing-hero { padding-top: 0.5rem; }
     .hero-copy { padding-bottom: 2rem; }
     .landing-eyebrow { font-size: 0.65rem; letter-spacing: 0.09em; }
-    .landing h1 { font-size: clamp(2.15rem, 7.5vw, 3.6rem); }
+    .landing h1 { font-size: clamp(1.75rem, 8.5vw, 3.6rem); }
     .hero-description { font-size: 1.02rem; }
     .hero-actions { gap: 1.1rem; }
     .hero-image img { height: 18rem; }

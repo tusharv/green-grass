@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Green Grass is a FastAPI app with a Svelte 5 frontend. A signed-in person uploads a PDF or DOCX CV, pastes one job, and gets one of two results: a fact-checked CV they can download as a PDF, or a practice plan for the required skills they do not have. The model never decides which result they get, and it never invents experience.
+Job Ready is a FastAPI app with a Svelte 5 frontend. A signed-in person uploads a PDF or DOCX CV, pastes one job, and gets one of two results: a fact-checked CV they can download as a PDF, or a practice plan for the required skills they do not have. The model never decides which result they get, and it never invents experience.
 
 ## The product
 
