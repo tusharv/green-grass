@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.2.0...v) (2026-10-12)
+
+
+### Features
+
+* credits and legal pages ([77a078a](https://github.com/tusharv/green-grass/commit/77a078ae04aeeb79380c4e3de285c7b1b16db725))
+
+
+
 #  (2026-10-12)
 
 
