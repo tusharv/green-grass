@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.4.1...v) (2026-10-12)
+
+
+### Features
+
+* agent for skill explainition ([4c702c3](https://github.com/tusharv/green-grass/commit/4c702c3f1306c1e1703e54030a68d3ae616a7fd3))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.4.0...v) (2026-10-12)
 
 
