@@ -111,3 +111,24 @@ class GapItem(BaseModel):
 class GapReport(BaseModel):
     summary: str = ""
     gaps: list[GapItem] = Field(default_factory=list)
+
+
+class ResumeDesign(BaseModel):
+    template: Literal['classic', 'modern', 'creative', 'minimal'] = 'classic'
+    accent: str = Field(default='#245747', pattern=r'^#[0-9a-fA-F]{6}$')
+    palette: Literal['custom', 'forest', 'navy', 'plum', 'terracotta', 'slate', 'teal'] = 'custom'
+    font: Literal['serif', 'sans', 'editorial', 'humanist', 'book', 'geometric', 'mono'] = 'serif'
+    photo_size: Literal['small', 'medium', 'large'] = 'medium'
+    photo_shape: Literal['round', 'square', 'rounded', 'portrait'] = 'round'
+    text_size: Literal['small', 'medium', 'large'] = 'medium'
+    spacing: Literal['compact', 'comfortable', 'airy'] = 'comfortable'
+    show_photo: bool = True
+    sections: list[Literal['summary', 'experience', 'skills', 'education']] = Field(
+        default_factory=lambda: ['summary', 'experience', 'skills', 'education'])
+
+    @field_validator('sections')
+    @classmethod
+    def all_sections(cls, value):
+        if len(value) != 4 or len(set(value)) != 4:
+            raise ValueError('Include each section exactly once.')
+        return value

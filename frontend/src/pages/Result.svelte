@@ -1,5 +1,7 @@
 <script>
   import { onMount } from 'svelte';
+  import DesignDocument from '../lib/DesignDocument.svelte';
+  import DesignPanel from '../lib/DesignPanel.svelte';
   import CvSheet from '../lib/CvSheet.svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
   import FitStrip from '../lib/FitStrip.svelte';
@@ -147,6 +149,7 @@
         </button>
       {/if}
     </div>
+    <DesignPanel {id} saved={row.design} onsave={(updated) => row = {...row, design:updated.design, design_html:updated.design_html, result:{...row.result, design:updated.design}}} />
     <div class="result">
       <FitStrip
         score={row.fit_score}
@@ -168,7 +171,7 @@
           <section aria-labelledby="next-step">
             <h2 id="next-step" class="artifact-heading"><span aria-hidden="true">✓</span> Your tailored CV</h2>
             <p class="artifact-note">Review the wording below before downloading your PDF.</p>
-            <CvSheet document={row.result.document} logosUrl={`/api/applications/${id}/logos`} />
+            {#if row.design_html}<DesignDocument logosUrl={`/api/applications/${id}/logos`} html={row.design_html} title="Your saved CV design" />{:else}<CvSheet document={row.result.document} logosUrl={`/api/applications/${id}/logos`} />{/if}
           </section>
         {/if}
       </div>

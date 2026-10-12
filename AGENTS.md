@@ -68,6 +68,7 @@ API, all under the signed-in user except session, register, login, and the publi
 - `GET|POST|DELETE /api/cvs/{id}/photo`, `POST /api/cvs/{id}/photo/github`. A photo is JPEG, PNG, or WebP up to 3 MB, stored only as a 640px square JPEG. With no choice saved, a GitHub link on the CV supplies the photo. DELETE means no photo, not "fall back to GitHub". LinkedIn photos cannot be fetched; people upload instead.
 - `GET|POST /api/applications`, `GET|DELETE /api/applications/{id}`. Deleting a role check leaves the CV.
 - `POST /api/applications/{id}/learning-plan` generates and saves a grounded AI learning plan using the saved profile, job description, and missing skills. Complete plans are reused; incomplete plans can be retried. It never changes fit, CV, or PDF eligibility.
+- `POST /api/applications/{id}/design` saves validated template settings per role check; `POST /api/applications/{id}/design-preview` previews without saving. Saved settings style the existing employer link and eligible PDF without changing CV facts.
 - `GET /api/applications/{id}/pdf` only when `suitable` and `result.kind == "cv"`
 - `POST|DELETE /api/applications/{id}/profile` publishes or removes the employer link. Deleting the role check removes it too.
 - `GET /api/profiles/{token}` is the public snapshot: the candidate's name, the role title, and the CV. A ready result uses the fact-checked CV. A gap result uses the saved profile. It has no score, no practice plan, and no PDF. It includes the CV's current photo; `GET /api/profiles/{token}/photo` serves an uploaded one.

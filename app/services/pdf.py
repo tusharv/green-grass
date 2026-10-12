@@ -1,6 +1,10 @@
 from html import escape
+import os
+import sys
+from pathlib import Path
 
-from app.schemas import CvDocument
+from app.schemas import CvDocument, ResumeDesign
+from app.services.design import designed_html
 
 
 def _section(title: str, body: str) -> str:
@@ -78,12 +82,26 @@ def document_html(document: CvDocument) -> str:
 </html>"""
 
 
-def render_pdf(document: CvDocument) -> bytes:
-    html = document_html(document)
+def _configure_pdf_libraries() -> None:
+    """Help macOS locate Homebrew libraries without changing Linux deployments."""
+    if sys.platform != 'darwin':
+        return
+    paths = [p for p in os.environ.get('DYLD_FALLBACK_LIBRARY_PATH', '').split(':') if p]
+    for directory in ('/opt/homebrew/lib', '/usr/local/lib'):
+        if (Path(directory) / 'libpango-1.0.dylib').is_file() and directory not in paths:
+            paths.append(directory)
+    if paths:
+        os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = ':'.join(paths)
+
+
+def render_pdf(document: CvDocument, design: ResumeDesign | None = None, photo: str = "") -> bytes:
+    html = designed_html(document, design, photo) if design else document_html(document)
+    _configure_pdf_libraries()
     try:
         from weasyprint import HTML
     except OSError as exc:
         raise RuntimeError(
-            "PDF rendering needs the system libraries in the Docker image."
+            "PDF rendering libraries could not be loaded. On macOS, install Pango with "
+            "brew install pango. On Linux, use the project Docker image."
         ) from exc
     return HTML(string=html).write_pdf()

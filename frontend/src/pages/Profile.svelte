@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import DesignDocument from '../lib/DesignDocument.svelte';
   import Avatar from '../lib/Avatar.svelte';
   import CompanyLogo from '../lib/CompanyLogo.svelte';
   import Icon from '../lib/Icon.svelte';
@@ -149,6 +150,12 @@
   <meta name="robots" content="noindex" />
 </svelte:head>
 
+{#if profile?.application_id}
+  <div class="profile-owner-actions">
+    <a class="customize-float" href="/applications/{profile.application_id}?design=1" aria-label="Customize design" title="Customize design"><Icon name="skills" size={23} /><span class="customize-label" aria-hidden="true">Customize design</span></a>
+  </div>
+{/if}
+
 {#if error === 'missing'}
   <section class="pf-missing">
     <span class="pf-missing-turf" aria-hidden="true"></span>
@@ -163,6 +170,8 @@
     <span class="pf-loading-line wide"></span>
     <span class="pf-loading-line"></span>
   </div>
+{:else if profile.design_html}
+  <DesignDocument logosUrl={logos} html={profile.design_html} title={`${profile.name} — shared profile`} />
 {:else}
   <article class="pf">
     <header class="pf-hero">
@@ -316,6 +325,14 @@
 {/if}
 
 <style>
+  .profile-owner-actions { position:fixed; left:max(1.25rem, env(safe-area-inset-left)); bottom:max(1.25rem, env(safe-area-inset-bottom)); z-index:50; }
+  .customize-float { position:relative; display:flex; align-items:center; justify-content:center; width:52px; height:52px; border-radius:50%; background:#245747; color:white; border:2px solid white; box-shadow:0 4px 16px #0003; text-decoration:none; }
+  .customize-float:hover { background:#173c31; }
+  .customize-float:focus-visible { outline:3px solid #245747; outline-offset:3px; }
+  .customize-label { position:absolute; left:calc(100% + 10px); white-space:nowrap; background:#173c31; color:white; border-radius:6px; padding:7px 11px; font-size:.8rem; opacity:0; pointer-events:none; }
+  .customize-float:hover .customize-label, .customize-float:focus-visible .customize-label { opacity:1; }
+  @media print { .profile-owner-actions { display:none; } }
+
   .pf {
     --turf: #0f5a3c;
     --turf-light: #146a48;

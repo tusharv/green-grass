@@ -1,4 +1,5 @@
 import re
+import base64
 import secrets
 import unicodedata
 from contextlib import asynccontextmanager
@@ -26,7 +27,8 @@ from app.auth import (
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
 from app.database import Base, make_engine, make_session_factory
 from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
-from app.schemas import CvDocument, GapReport, Profile
+from app.schemas import CvDocument, GapReport, Profile, ResumeDesign
+from app.services.design import designed_html
 from app.services.llm import ModelError, OllamaCloudClient, write_gap
 from app.services.logos import CompanyLogos
 from app.services.parser import UploadError, extract_text
@@ -315,6 +317,22 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = require_user(request, db)
         return _application_detail(owned_application(db, user, application_id))
 
+    @app.post("/api/applications/{application_id}/design")
+    def save_design(application_id: int, body: ResumeDesign, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        row = owned_application(db, require_user(request, db), application_id)
+        row.result_json = {**row.result_json, "design": body.model_dump()}
+        db.commit()
+        db.refresh(row)
+        return _application_detail(row)
+
+    @app.post("/api/applications/{application_id}/design-preview")
+    def preview_design(application_id: int, body: ResumeDesign, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        row = owned_application(db, require_user(request, db), application_id)
+        html = designed_html(CvDocument.model_validate(_employer_document(row)), body, _design_photo(row.cv, web=True))
+        return Response(html, media_type="text/html")
+
     @app.post("/api/applications/{application_id}/learning-plan")
     def application_learning_plan(application_id: int, request: Request, db: Session = Depends(get_db)):
         require_csrf(request)
@@ -340,6 +358,8 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             )
         except ModelError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+        # A design may have been saved while the model was running.
+        db.refresh(row)
         row.result_json = {**row.result_json, "learning_plan": report.model_dump()}
         db.commit()
         db.refresh(row)
@@ -362,7 +382,10 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             raise HTTPException(status_code=404, detail="A PDF is available when the CV is ready to send.")
         document = CvDocument.model_validate(row.result_json["document"])
         try:
-            pdf = render_pdf(document)
+            if row.result_json.get("design"):
+                pdf = render_pdf(document, ResumeDesign.model_validate(row.result_json["design"]), _design_photo(row.cv))
+            else:
+                pdf = render_pdf(document)
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         filename = _pdf_filename(row.role_title)
@@ -405,6 +428,10 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         }
         if share.application is not None:
             body["photo"] = _photo(share.application.cv, document, f"/api/profiles/{token}/photo")
+        if share.application is not None and share.application.result_json.get("design"):
+            design = ResumeDesign.model_validate(share.application.result_json["design"])
+            body["design"] = design.model_dump()
+            body["design_html"] = designed_html(CvDocument.model_validate(document), design, _design_photo(share.application.cv, web=True), shared_for=share.role_title)
         user = current_user(request, db)
         if user is not None and share.application is not None and share.application.user_id == user.id:
             body["cv_id"] = share.application.cv_id
@@ -592,6 +619,8 @@ def _application_detail(row: Application) -> dict:
     return {
         **_version_summary(row),
         "candidate_name": _candidate_name(row),
+        "design": row.result_json.get("design"),
+        "design_html": designed_html(CvDocument.model_validate(_employer_document(row)), ResumeDesign.model_validate(row.result_json["design"]), _design_photo(row.cv, web=True)) if row.result_json.get("design") else None,
         "skill_board": row.skill_board_json,
         "result": row.result_json,
     }
@@ -647,3 +676,14 @@ def _pdf_filename(role_title: str) -> str:
 
 
 app = create_app()
+
+
+def _design_photo(cv: CV, *, web: bool = False) -> str:
+    # PDFs embed uploads only; browser profiles also honor the GitHub preference.
+    if cv.photo is not None and cv.photo.source == "upload" and cv.photo.data:
+        return "data:image/jpeg;base64," + base64.b64encode(cv.photo.data).decode("ascii")
+    if web:
+        selected = _photo(cv, cv.profile_json, "")
+        if selected and selected["source"] == "github":
+            return selected["url"]
+    return ""
