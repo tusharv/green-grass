@@ -25,7 +25,7 @@
 
 <section class="auth">
   <h1>Sign in</h1>
-  <p class="lede">Upload a CV, paste one role, and get a version an employer can read, or a straight list of what to learn first.</p>
+  <p class="lede">Welcome back. Pick up where you left off and take the next step toward your next role.</p>
   <form onsubmit={submit}>
     <label>
       Email

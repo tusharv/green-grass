@@ -47,7 +47,7 @@
 
 <section class="stack narrow">
   <h1>Check a role</h1>
-  <p class="lede">Paste the job description. Skills you already have are highlighted. If the role is out of reach, you get the gaps and what to practice, not a rewritten CV.</p>
+  <p class="lede">Bring your next role into focus. Paste the job description to see where your experience fits and what to work on next.</p>
   <form onsubmit={submit} aria-busy={busy}>
     <label>
       CV

@@ -4,6 +4,7 @@ import json
 from docx import Document
 from fastapi.testclient import TestClient
 
+from app import __version__
 from app.config import Settings
 from app.main import _name_slug, create_app
 from app.services.prompts import EXTRACT_JOB, EXTRACT_RESUME, REWRITE_CV, SCREEN, UPSKILL
@@ -140,7 +141,7 @@ def _upload(client: TestClient) -> int:
 
 def test_health(tmp_path):
     client = _client(tmp_path, ScriptedModel(suitable_job().model_dump()))
-    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/health").json() == {"ok": True, "version": __version__}
 
 
 def test_register_login_and_cv_isolation(tmp_path):

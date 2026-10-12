@@ -25,7 +25,7 @@
 
 <section class="auth">
   <h1>Create an account</h1>
-  <p class="lede">Your CVs stay on your account. They are not kept as files on the server.</p>
+  <p class="lede">Start with the experience you have. Find out what’s ready to send and what you can build next.</p>
   <form onsubmit={submit}>
     <label>
       Email

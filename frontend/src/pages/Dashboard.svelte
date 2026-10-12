@@ -68,7 +68,7 @@
       <div class="welcome-text">
         <p class="eyebrow">Career Desk</p>
         <h1>Welcome back{#if session.user?.email}, <span class="welcome-email">{session.user.email}</span>{/if}</h1>
-        <p class="lede">Upload a CV, check it against one role, and remove anything you no longer need.</p>
+        <p class="lede">Your next step starts here. Check your CV against a role and see what’s ready or what to build next.</p>
       </div>
     </div>
     <a class="button" href="/cvs/new"><Icon name="upload" size={18} /> Upload a CV</a>

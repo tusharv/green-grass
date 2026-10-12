@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
+from app import __version__
 from app.auth import (
     check_password,
     csrf_token,
@@ -111,7 +112,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
 
     @app.get("/health")
     def health():
-        return {"ok": True}
+        return {"ok": True, "version": __version__}
 
     @app.get("/api/session")
     def session(request: Request, db: Session = Depends(get_db)):

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f4f7f2"/>
+  <path d="M960 630V480H1080V330H1200" fill="none" stroke="#dce8dc" stroke-width="56"/>
+<svg x="76" y="64" width="64" height="64" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#1b6b45"/>
+  <path d="M9 23V16H16V9H23" fill="none" stroke="#f4faf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+  <text x="158" y="109" font-family="Arial, sans-serif" font-weight="700" font-size="38" fill="#203b2c">Job Ready</text>
+  <text x="76" y="260" font-family="Georgia, serif" font-size="84" fill="#203b2c">Show why you fit.</text>
+  <text x="76" y="359" font-family="Georgia, serif" font-size="84" fill="#1b6b45">One role at a time.</text>
+  <text x="80" y="433" font-family="Arial, sans-serif" font-size="28" fill="#526357">Your real experience. Made relevant.</text>
+  <text x="80" y="554" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1b6b45">jobready.tech</text>
+</svg>

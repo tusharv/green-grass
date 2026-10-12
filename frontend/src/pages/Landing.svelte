@@ -1,46 +1,54 @@
 <script>
-  import meadow from '../assets/landing-meadow.jpg';
-  import workspace from '../assets/landing-workspace.jpg';
+  import focusedCv from '../assets/landing-focused-cv.jpg';
+  import nextStep from '../assets/landing-build-your-next-step.jpg';
   import Icon from '../lib/Icon.svelte';
 
   const steps = [
-    { title: 'Start with your experience.', text: 'Upload your existing CV as a text PDF or DOCX. Job Ready reads your skills, work history, and education.' },
-    { title: 'Bring one role into focus.', text: 'Paste the role title and job description. We check the requirements against the experience already on your CV.' },
-    { title: 'Know your next step.', text: 'Get a fact-checked CV when you meet the bar, or a focused practice plan when there are gaps to close.' },
+    { icon: 'cv', title: 'Bring the work you’ve actually done.', text: 'Upload your existing CV as a text PDF or DOCX. Job Ready reads your skills, work history, and education.' },
+    { icon: 'role', title: 'See what this role needs.', text: 'Paste the role title and job description. We check the requirements against the experience already on your CV.' },
+    { icon: 'skills', title: 'Apply with clarity. Or build toward it.', text: 'Get a fact-checked CV when you meet the bar, or a focused practice plan when there are gaps to close.' },
   ];
 </script>
 
 <div class="landing">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="hero-copy">
-      <p class="landing-eyebrow">A little clarity for your next chapter</p>
-      <h1 id="landing-title">Your next role.<br /><span>An honest next step.</span></h1>
-      <p class="hero-description">Turn your CV and one job description into a clearer application or a focused plan to grow.</p>
+      <p class="landing-eyebrow">Applying, but hearing nothing?</p>
+      <h1 id="landing-title">Show why you fit.<br /><span>One role at a time.</span></h1>
+      <p class="hero-description">Your experience matters. Compare it with one role, then get a fact-checked CV that shows your fit or a plan to build what’s missing.</p>
       <div class="hero-actions">
-        <a class="button" href="/register">Create account <Icon name="arrow" size={18} /></a>
+        <a class="button" href="/register">Check your CV <Icon name="arrow" size={18} /></a>
         <a class="learn-link" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a>
       </div>
     </div>
     <figure class="hero-image">
-      <img src={meadow} width="1440" height="960" alt="A winding path through a sunlit green meadow toward a lone tree." fetchpriority="high" />
+      <svg class="hero-steps" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M10 150V80H80V10H150" stroke="currentColor" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" /></svg>
+      <img src={focusedCv} width="1200" height="1200" alt="Job Ready’s steps logo on a green staircase, carrying scattered applications toward one focused CV and role." fetchpriority="high" />
     </figure>
   </section>
 
   <section class="landing-intro" aria-labelledby="intro-title">
-    <h2 id="intro-title">A better application starts<br />with the experience you have.</h2>
-    <p>Job Ready helps you see how your CV fits a specific job. It brings your relevant experience forward and makes the missing skills clear, so you can choose your next step with confidence.</p>
+    <div class="journey" aria-label="Your CV and a role lead to a clearer next step">
+      <span><Icon name="cv" size={24} /> Your CV</span>
+      <span class="journey-join" aria-hidden="true">+</span>
+      <span><Icon name="role" size={24} /> One role</span>
+      <span class="journey-line" aria-hidden="true"></span>
+      <span class="journey-result"><Icon name="skills" size={24} /> Your next step</span>
+    </div>
+    <h2 id="intro-title">Silence isn’t a verdict<br />on your experience.</h2>
+    <p>A generic CV can make relevant work easy to miss. Sending more applications may not fix that. Start with one role and make the experience that matters easier to see.</p>
   </section>
 
   <section id="how-it-works" class="landing-process" aria-labelledby="process-title">
     <div class="process-image">
-      <img src={workspace} width="1000" height="667" alt="An open notebook, green pen, and coffee on a sunlit desk beside a window." loading="lazy" decoding="async" />
+      <img src={nextStep} width="1200" height="1200" alt="A practice workbook and learning blocks on a staircase branded with the Job Ready steps logo, with a new step ready to build." loading="lazy" decoding="async" />
     </div>
     <div class="process-copy">
-      <h2 id="process-title">One CV. One role.<br />A clearer way forward.</h2>
+      <h2 id="process-title">Before you apply,<br />make the connection.</h2>
       <ol class="process-steps">
-        {#each steps as step, index}
+        {#each steps as step}
           <li>
-            <span class="step-number" aria-hidden="true">0{index + 1}</span>
+            <span class="step-number"><Icon name={step.icon} size={22} /></span>
             <div><h3>{step.title}</h3><p>{step.text}</p></div>
           </li>
         {/each}
@@ -51,38 +59,56 @@
   <section class="landing-outcomes" aria-labelledby="outcomes-title">
     <div class="outcomes-heading">
       <h2 id="outcomes-title">Two outcomes. Both move you forward.</h2>
-      <p>Useful whether you’re ready to apply or still building the experience.</p>
+      <p>Leave with something you can use: a CV to send or a plan to work on.</p>
     </div>
     <div class="outcome-grid">
       <article class="landing-outcome outcome-ready">
-        <span class="outcome-icon"><Icon name="ready" size={28} /></span>
+        <div class="outcome-art" aria-hidden="true">
+          <svg viewBox="0 0 280 120" fill="none">
+            <rect x="64" y="8" width="148" height="104" rx="8" fill="var(--paper)" stroke="currentColor" stroke-width="1.5" />
+            <g transform="translate(176 21) scale(.6)"><rect width="32" height="32" rx="7" fill="var(--accent)" /><path d="M9 23V16H16V9H23" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></g>
+            <path d="M84 30H154M84 42H126" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+            <path d="M84 62H184M84 74H172M84 86H184" stroke="currentColor" stroke-opacity=".3" stroke-width="3" stroke-linecap="round" />
+            <circle cx="212" cy="82" r="26" fill="var(--accent)" />
+            <path d="M200 82L208 90L225 73" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
         <h3>Ready to send</h3>
-        <p>When your CV meets the bar, get a tailored version that puts your relevant experience into clearer words.</p>
+        <p>When your CV meets the bar, make your relevant work easier to spot. Get a tailored CV grounded in the experience you already have.</p>
         <ul>
           <li>A fit report grounded in your CV</li>
           <li>Your facts preserved, your wording refined</li>
           <li>A clean, professional PDF to download</li>
         </ul>
-        <p class="outcome-note">Your experience, presented with purpose.</p>
+        <p class="outcome-note">Same experience. A clearer story for this role.</p>
       </article>
       <article class="landing-outcome outcome-grow">
-        <span class="outcome-icon"><Icon name="skills" size={28} /></span>
+        <div class="outcome-art" aria-hidden="true">
+          <svg viewBox="0 0 280 120" fill="none">
+            <path d="M44 108V76H108V44H172V12H236" stroke="currentColor" stroke-opacity=".18" stroke-width="16" stroke-linejoin="round" />
+            <circle cx="76" cy="76" r="15" fill="var(--paper)" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="140" cy="44" r="15" fill="var(--paper)" stroke="currentColor" stroke-width="1.5" />
+            <g transform="translate(190 0) scale(.85)"><rect width="32" height="32" rx="7" fill="var(--accent)" /><path d="M9 23V16H16V9H23" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></g>
+            <path d="M70 76H82M76 70V82M134 44H146M140 38V50" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
         <h3>Gaps to close</h3>
-        <p>When your CV doesn’t meet the bar yet, get a practical roadmap for the skills or experience you need to build.</p>
+        <p>You don’t have to fit every role. When there are gaps, see what matters most and get practical ways to build toward the job.</p>
         <ul>
           <li>Missing requirements made clear</li>
           <li>The most important gaps first</li>
           <li>Focused ways to practice and improve</li>
         </ul>
-        <p class="outcome-note">A practice plan, with no rewritten CV or PDF.</p>
+        <p class="outcome-note">Build the missing skills, one practical step at a time.</p>
       </article>
     </div>
   </section>
 
   <section class="landing-principle" aria-labelledby="principle-title">
     <span class="principle-mark" aria-hidden="true"><Icon name="cv" size={30} /></span>
-    <h2 id="principle-title">Better wording.<br />Always your real story.</h2>
-    <p>Your employers, titles, dates, and qualifications stay yours. Every rewrite is checked against your saved profile. Job Ready won’t invent experience to make a role look like a fit.</p>
+    <h2 id="principle-title">Make your relevance clear.<br />Keep your story true.</h2>
+    <p>Tailoring means helping an employer see the connection between your work and their role. Your employers, titles, dates, and qualifications stay yours. Every rewrite is checked against your saved profile. No invented skills, projects, or numbers.</p>
+    <a class="article-link" href="https://peerlist.io/tusharv/articles/applying-everywhere-but-not-getting-replies">Read why we built Job Ready <Icon name="arrow" size={16} /></a>
   </section>
 
   <section class="landing-faq" aria-labelledby="faq-title">
@@ -108,7 +134,7 @@
   </section>
 
   <footer class="landing-footer">
-    <p>Job Ready <span>jobready.tech</span></p>
+    <p>Job Ready <span>One step ahead in your job search.</span></p>
     <a href="/login">Already have an account? Sign in <span aria-hidden="true">↗</span></a>
   </footer>
 </div>
@@ -118,10 +144,10 @@
   .landing h1, .landing h2 { font-family: var(--serif); }
   .landing h2 { font-size: clamp(1.8rem, 3.4vw, 2.65rem); line-height: 1.15; font-weight: 500; letter-spacing: -0.035em; }
   .landing p { color: var(--muted); }
-  .landing-hero { padding-top: 1.2rem; }
-  .hero-copy { padding: 0.5rem 0 2.6rem; }
+  .landing-hero { padding: 2.8rem 0 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
+  .hero-copy { padding: 1rem 0; }
   .landing-eyebrow { margin: 0 0 1.3rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
-  .landing h1 { margin: 0; max-width: 100%; font-size: clamp(2.5rem, 5.9vw, 4.6rem); font-weight: 500; line-height: 1.08; letter-spacing: -0.045em; }
+  .landing h1 { margin: 0; max-width: 100%; font-size: clamp(2.3rem, 4.2vw, 3.6rem); font-weight: 500; line-height: 1.08; letter-spacing: -0.045em; }
   .landing h1 span { color: var(--accent-deep); }
   .hero-description { max-width: 32rem; margin: 1.4rem 0 1.6rem; font-size: 1.12rem; line-height: 1.5; }
   .hero-actions { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; }
@@ -129,18 +155,20 @@
   .learn-link { font-weight: 600; font-size: 0.94rem; text-decoration: none; }
   .learn-link:hover { text-decoration: underline; }
   .learn-link span { margin-left: 0.55rem; }
-  .hero-image { margin: 0; overflow: hidden; border-radius: var(--radius-surface); }
-  .hero-image img { display: block; width: 100%; height: clamp(16rem, 32vw, 27rem); object-fit: cover; object-position: center 35%; }
-  .landing-intro { max-width: 42rem; margin: var(--landing-space) auto; text-align: center; }
+  .hero-image { margin: 0; position: relative; padding: 0 0 1.5rem 1.5rem; }
+  .hero-steps { position: absolute; width: 8rem; height: 8rem; left: -0.6rem; bottom: 0; color: #c5dbce; }
+  .hero-image img { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius-surface); }
+  .landing-intro { max-width: 48rem; margin: var(--landing-space) auto; text-align: center; }
   .landing-intro h2 { margin: 0 0 1.3rem; }
   .landing-intro p { max-width: 36rem; margin: 0 auto; line-height: 1.75; }
   .landing-process { display: grid; grid-template-columns: 0.95fr 1fr; align-items: center; gap: clamp(2rem, 6vw, 5rem); scroll-margin-top: 2rem; }
-  .process-image { align-self: stretch; border-radius: var(--radius-surface); overflow: hidden; }
-  .process-image img { display: block; width: 100%; height: 100%; max-height: 36rem; object-fit: cover; }
+  .process-image { align-self: center; border-radius: var(--radius-surface); overflow: hidden; }
+  .process-image img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
   .process-copy h2 { margin: 0 0 2.2rem; }
   .process-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.7rem; }
-  .process-steps li { display: grid; grid-template-columns: 2rem 1fr; gap: 1rem; }
-  .step-number { font-family: var(--serif); font-size: 1.1rem; color: var(--accent); padding-top: 0.05rem; }
+  .process-steps li { position: relative; display: grid; grid-template-columns: 2.8rem 1fr; gap: 1rem; }
+  .process-steps li:not(:last-child)::after { content: ""; position: absolute; top: 2.8rem; bottom: -1.7rem; left: 1.35rem; border-left: 1px solid var(--line); }
+  .step-number { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; border: 1px solid var(--line); border-radius: 50%; color: var(--accent); background: var(--canvas); }
   .process-steps h3 { font-family: var(--sans); font-size: 1.08rem; font-weight: 600; margin: 0 0 0.4rem; }
   .process-steps p { margin: 0; font-size: 0.96rem; line-height: 1.65; }
   .landing-outcomes { margin-top: var(--landing-space); }
@@ -151,7 +179,8 @@
   .landing-outcome { border-radius: var(--radius-surface); padding: clamp(1.5rem, 3.5vw, 2.8rem); }
   .outcome-ready { background: #e6eee7; }
   .outcome-grow { background: #edf0ec; }
-  .outcome-icon { display: inline-flex; color: var(--accent-deep); margin-bottom: 1.3rem; }
+  .outcome-art { color: var(--accent-deep); height: 8rem; margin: 0 0 1.6rem; }
+  .outcome-art svg { display: block; width: 100%; height: 100%; }
   .landing-outcome h3 { font-family: var(--serif); font-weight: 500; font-size: 1.8rem; letter-spacing: -0.025em; }
   .landing-outcome > p { line-height: 1.65; font-size: 0.98rem; }
   .landing-outcome ul { padding-left: 1.15rem; color: var(--muted); font-size: 0.94rem; line-height: 1.65; display: grid; gap: 0.45rem; margin: 1.5rem 0 1.8rem; }
@@ -161,6 +190,7 @@
   .principle-mark { display: inline-flex; margin-bottom: 1rem; color: var(--accent); }
   .landing-principle h2 { margin: 0 0 1.3rem; }
   .landing-principle p { margin: 0; line-height: 1.75; }
+  .article-link { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.95rem; font-weight: 600; }
   .landing-faq { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 3rem; padding-top: 2.6rem; border-top: 1px solid var(--line); }
   .landing-faq h2 { margin: 0; font-size: 2rem; }
   .faq-items details { border-bottom: 1px solid var(--line); }
@@ -175,21 +205,34 @@
   .landing-footer p span { margin-left: 1rem; font-weight: 400; color: var(--muted); }
   .landing-footer a { text-decoration: none; }
   .landing-footer a:hover { text-decoration: underline; }
-  @media (min-width: 1000px) {
-    .hero-copy { position: relative; }
-    .hero-description { position: absolute; right: 0; bottom: 3rem; max-width: 18rem; margin: 0; }
-    .hero-actions { margin-top: 1.8rem; }
+  .journey { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 0 auto 3rem; }
+  .journey > span:not(.journey-join):not(.journey-line) { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; font-weight: 600; white-space: nowrap; }
+  .journey-result { padding: 0.8rem 1rem; border-radius: var(--radius-control); background: #e6eee7; color: var(--accent-deep); }
+  .journey-join { color: var(--muted); font-size: 1.3rem; }
+  .journey-line { width: 3rem; border-top: 1px solid var(--accent); }
+  .landing-principle { position: relative; }
+  .principle-mark { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius-surface); background: #e6eee7; }
+  @media (min-width: 761px) and (max-width: 1100px) {
+    .landing-hero { gap: 1.3rem; }
+    .landing h1 { font-size: 3.5vw; }
+    .hero-actions { gap: 1rem; }
   }
   @media (max-width: 760px) {
-    .landing-hero { padding-top: 0.5rem; }
+    .landing-hero { padding-top: 0.5rem; grid-template-columns: 1fr; gap: 0.5rem; }
     .hero-copy { padding-bottom: 2rem; }
     .landing-eyebrow { font-size: 0.65rem; letter-spacing: 0.09em; }
     .landing h1 { font-size: clamp(1.75rem, 8.5vw, 3.6rem); }
     .hero-description { font-size: 1.02rem; }
     .hero-actions { gap: 1.1rem; }
-    .hero-image img { height: 18rem; }
+    .hero-image img { height: auto; aspect-ratio: 1; }
+    .hero-image { padding-left: 1rem; padding-bottom: 1rem; }
+    .hero-steps { width: 6rem; height: 6rem; left: 0; }
+    .journey { display: grid; grid-template-columns: auto auto auto; gap: 0.55rem 1rem; max-width: 23rem; margin-bottom: 2rem; }
+    .journey-line { grid-column: 2; grid-row: 2; justify-self: center; height: 1.2rem; width: 0; border-top: 0; border-left: 1px solid var(--accent); }
+    .journey-result { grid-column: 1 / -1; grid-row: 3; justify-self: center; }
+    .journey > span:not(.journey-join):not(.journey-line) { font-size: 0.85rem; }
     .landing-process, .landing-faq { grid-template-columns: 1fr; gap: 2rem; }
-    .process-image img { height: 19rem; }
+    .process-image img { height: auto; min-height: 0; aspect-ratio: 1; }
     .outcome-grid { grid-template-columns: 1fr; }
     .landing-footer { align-items: flex-start; flex-direction: column; gap: 1rem; }
     .landing-footer p span { display: block; margin: 0.35rem 0 0; }

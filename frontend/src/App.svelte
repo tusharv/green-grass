@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-  <title>{route.name === 'home' && !session.user ? 'Job Ready | Your next role. An honest next step.' : 'Job Ready'}</title>
+  <title>{route.name === 'home' && !session.user ? 'Job Ready | Show why you fit. One role at a time.' : 'Job Ready'}</title>
 </svelte:head>
 
 <div class="frame" class:bare={route.name === 'profile'} class:landing-frame={route.name === 'home' && !session.user}>
