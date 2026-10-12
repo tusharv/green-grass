@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.4.0...v) (2026-10-12)
+
+
+### Bug Fixes
+
+* resume templates ([f9d8e71](https://github.com/tusharv/green-grass/commit/f9d8e71baa8975ddd74ee0d57e8859dd0e052cd7))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.3.0...v) (2026-10-12)
 
 
