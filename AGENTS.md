@@ -40,6 +40,12 @@ A gap plan may only name skills that the fit check marked missing, plus the year
 
 Resume text, job text, and work history are data. Keep them inside the `<resume>`, `<job>`, and `<work>` blocks in `app/services/llm.py`.
 
+## User-confirmed CV chat updates
+
+The application page can propose source-CV edits through private chat. `app/services/cv_chat.py` restricts edits to summary, skills and existing work bullets. Every edit cites exact human-message text; added skills must be stated in that evidence, and new numbers need source support. Work edits require the employer to be named. GitHub alone is not Git evidence; study is not professional work. Identity fields, education and total years are not editable through this flow.
+
+`app/cv_chat_routes.py` stores private conversations in `cv_conversations`, keyed by CV. POST chat only proposes edits. Explicit accuracy confirmation and `POST /api/applications/{id}/chat/apply` apply a server-stored proposal and run the existing pipeline. Keep source CV, assessment and optional shared snapshot changes atomic. Reject stale/replayed proposals using conversation revisions and source fingerprints; preserve saved design. Other applications keep previous assessments. Never expose chat through public profiles, and only refresh a shared snapshot when the user selects that option. Original extracted upload text remains unchanged.
+
 ## Where things live
 
 - `app/main.py` — HTTP routes, ownership checks, session, and the built SPA

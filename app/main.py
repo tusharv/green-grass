@@ -25,6 +25,7 @@ from app.auth import (
     verify_password,
 )
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
+from app.cv_chat_routes import register_cv_chat
 from app.database import Base, make_engine, make_session_factory
 from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
 from app.schemas import CvDocument, GapReport, Profile, ResumeDesign
@@ -111,6 +112,8 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         if row is None or row.user_id != user.id:
             raise HTTPException(status_code=404, detail="That check was not found.")
         return row
+
+    register_cv_chat(app, get_db, owned_application, model_client, _application_detail)
 
     @app.get("/health")
     def health():
@@ -345,6 +348,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         ):
             return _application_detail(row)
         board = row.skill_board_json or {}
+        source_profile = row.cv.profile_json
         required = board.get("required") or []
         major = [mark["name"] for mark in required if not mark["present"]]
         minor = [mark["name"] for mark in board.get("preferred", []) if not mark["present"]]
@@ -358,8 +362,11 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             )
         except ModelError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
-        # A design may have been saved while the model was running.
+        # A design or CV update may have finished while the model was running.
         db.refresh(row)
+        db.refresh(row.cv)
+        if row.skill_board_json != board or row.cv.profile_json != source_profile:
+            raise HTTPException(409, "The CV changed while preparing this plan. Refresh and try again.")
         row.result_json = {**row.result_json, "learning_plan": report.model_dump()}
         db.commit()
         db.refresh(row)

@@ -57,7 +57,7 @@
               <tr>
                 <th scope="row">{mark.name}<small>{group.label}</small></th>
                 <td><span class:status-present={mark.present} class:status-gap={!mark.present} class="evidence-status"><span aria-hidden="true">{mark.present ? '✓' : '↗'}</span> {mark.present ? 'Evidenced' : group.label === 'Required' ? 'Major gap' : 'Minor gap'}</span></td>
-                <td>{#if mark.present && mark.source === 'skills'}<p class="hint">Listed in your CV skills: <strong>{mark.quote}</strong>. No work bullet shows it yet.</p>{:else if mark.present && mark.quote}<blockquote>{mark.quote}</blockquote>{:else if mark.present}<p class="hint">Evidence quote unavailable for this saved review. Check the role again to see it.</p>{:else}<p class="hint">Not evidenced in your CV.</p>
+                <td>{#if mark.present && mark.source === 'skills'}<p class="hint">Listed in your CV skills: <strong>{mark.quote}</strong>. No work bullet shows it yet.</p>{:else if mark.present && mark.quote}<blockquote>{mark.quote}</blockquote>{:else if mark.present}<p class="hint">Evidence quote unavailable for this saved review. Check the role again to see it.</p>{:else}<p class="hint">Not evidenced in your CV.</p><p><a href="#cv-chat">Have this experience? Update your CV <span aria-hidden="true">↗</span></a></p>
                   {@const planIndex = plans.findIndex((plan) => plan.skill === mark.name)}
                   {#if planIndex >= 0 || canLearn}<a class="gap-plan-link" href={planIndex >= 0 ? `#gap-plan-${planIndex}` : '#learning-title'}>View upskilling plan &amp; materials <span aria-hidden="true">↗</span></a>{/if}
                 {/if}</td>

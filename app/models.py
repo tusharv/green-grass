@@ -101,3 +101,14 @@ class ProfileShare(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     application: Mapped[Application] = relationship(back_populates="share")
+
+
+class CvConversation(Base):
+    """Private review history shared by the applications using one source CV."""
+
+    __tablename__ = 'cv_conversations'
+    cv_id: Mapped[int] = mapped_column(ForeignKey('cvs.id', ondelete='CASCADE'), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer, default=0)
+    messages: Mapped[list] = mapped_column(JSON, default=list)
+    pending: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

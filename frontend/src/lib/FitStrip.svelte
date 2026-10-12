@@ -28,6 +28,7 @@
   <nav class="review-nav" aria-label="Review sections">
     <a href="#review-title">Role overview <span aria-hidden="true">→</span></a>
     {#if required.length || preferred.length}<a href="#comparison-title">Requirement comparison <span aria-hidden="true">→</span></a>{/if}
+    <a href="#cv-chat">Update my CV <span aria-hidden="true">→</span></a>
     {#if hasPlan}<a href="#learning-title">Your upskilling plan <span aria-hidden="true">→</span></a>{/if}
     {#if suitable}<a href="#next-step">Your tailored CV <span aria-hidden="true">→</span></a>{/if}
   </nav>

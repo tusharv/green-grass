@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import DesignDocument from '../lib/DesignDocument.svelte';
   import DesignPanel from '../lib/DesignPanel.svelte';
+  import CvChat from '../lib/CvChat.svelte';
   import CvSheet from '../lib/CvSheet.svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
   import FitStrip from '../lib/FitStrip.svelte';
@@ -20,6 +21,7 @@
   let copied = $state(false);
   let learningPending = $state(false);
   let learningError = $state('');
+  let assessmentRevision = 0;
 
   onMount(async () => {
     try {
@@ -47,11 +49,12 @@
     [...(board.required || []), ...preferred].some((mark) => !mark.present));
 
   async function generateLearningPlan() {
+    const startedAt = assessmentRevision;
     learningPending = true;
     learningError = '';
     try {
       const updated = await api(`/api/applications/${id}/learning-plan`, { method: 'POST' });
-      row = { ...row, result: updated.result };
+      if (startedAt === assessmentRevision) row = { ...row, result: updated.result };
     } catch (err) {
       learningError = err.message;
     } finally {
@@ -164,6 +167,7 @@
       />
       <div class="review-content">
         <RoleReview required={board.required || []} {preferred} {suitable} {plans} {canLearn} />
+        <CvChat {id} shared={Boolean(shareUrl)} blocked={learningPending || sharePending} onapply={(updated) => { assessmentRevision += 1; row = updated; learningError = ''; }} />
         {#if plans.length || canLearn}
           <GapRoadmap {plans} summary={report?.summary || ''} pending={learningPending} error={learningError} incomplete={canLearn && !hasLearningDetails(report)} onretry={generateLearningPlan} />
         {/if}
