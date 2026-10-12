@@ -6,6 +6,11 @@ test('visitors can reach the landing page without signing in', () => {
   assert.deepEqual(matchRoute('/'), { name: 'home', auth: false });
 });
 
+test('privacy and terms are public pages', () => {
+  assert.deepEqual(matchRoute('/privacy'), { name: 'privacy', auth: false });
+  assert.deepEqual(matchRoute('/terms'), { name: 'terms', auth: false });
+});
+
 test('private CV and application pages still require sign-in', () => {
   for (const path of ['/cvs/new', '/cvs/1', '/apply?cv=1', '/applications/1']) {
     assert.equal(matchRoute(path).auth, true, path);

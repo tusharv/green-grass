@@ -5,6 +5,7 @@
   import { api, loadSession, session } from './lib/session.svelte.js';
   import Icon from './lib/Icon.svelte';
   import BrandLogo from './lib/BrandLogo.svelte';
+  import Credits from './lib/Credits.svelte';
   import { getInitials } from './lib/user.js';
   import Login from './pages/Login.svelte';
   import Register from './pages/Register.svelte';
@@ -15,6 +16,7 @@
   import Apply from './pages/Apply.svelte';
   import Result from './pages/Result.svelte';
   import Profile from './pages/Profile.svelte';
+  import Legal from './pages/Legal.svelte';
 
   let booted = $state(false);
   const route = $derived(matchRoute(locationState.path));
@@ -66,7 +68,13 @@
 </script>
 
 <svelte:head>
-  <title>{route.name === 'home' && !session.user ? 'Job Ready | Show why you fit. One role at a time.' : 'Job Ready'}</title>
+  <title>{route.name === 'home' && !session.user
+    ? 'Job Ready | Show why you fit. One role at a time.'
+    : route.name === 'privacy'
+      ? 'Privacy | Job Ready'
+      : route.name === 'terms'
+        ? 'Terms and conditions | Job Ready'
+        : 'Job Ready'}</title>
 </svelte:head>
 
 <div class="frame" class:bare={route.name === 'profile'} class:landing-frame={route.name === 'home' && !session.user}>
@@ -91,15 +99,17 @@
         <button type="button" class="text signout-btn" onclick={signOut}>Sign out</button>
       {:else if route.name !== 'profile'}
         <a
+          class="button secondary"
           href="/login"
           aria-current={route.name === 'login' ? 'page' : undefined}
           onclick={(event) => followLink(event, '/login')}
-        >Sign in</a>
+        ><Icon name="signin" size={16} /> Sign in</a>
         <a
+          class="button"
           href="/register"
           aria-current={route.name === 'register' ? 'page' : undefined}
           onclick={(event) => followLink(event, '/register')}
-        >Create account</a>
+        ><Icon name="account" size={16} /> Create account</a>
       {/if}
     </nav>
   </header>
@@ -127,6 +137,8 @@
       <Result id={route.id} />
     {:else if route.name === 'profile'}
       <Profile token={route.token} />
+    {:else if route.name === 'privacy' || route.name === 'terms'}
+      <Legal page={route.name} />
     {:else}
       <section class="stack narrow">
         <h1>That page is not here</h1>
@@ -134,4 +146,7 @@
       </section>
     {/if}
   </main>
+  {#if booted}
+    <Credits quiet={route.name === 'home' && !session.user} />
+  {/if}
 </div>

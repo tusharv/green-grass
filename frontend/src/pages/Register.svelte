@@ -36,6 +36,7 @@
       <input type="password" autocomplete="new-password" minlength="8" bind:value={password} required />
     </label>
     {#if error}<p class="alert" role="alert">{error}</p>{/if}
+    <p class="hint">By creating an account, you agree to the <a href="/terms">terms</a> and the <a href="/privacy">privacy page</a>.</p>
     <button type="submit" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
   </form>
   <p class="switch">Already registered? <a href="/login">Sign in</a></p>

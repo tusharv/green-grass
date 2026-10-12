@@ -5,6 +5,8 @@ export function matchRoute(full) {
 
   if (path === '/login') return { name: 'login', auth: false };
   if (path === '/register') return { name: 'register', auth: false };
+  if (path === '/privacy') return { name: 'privacy', auth: false };
+  if (path === '/terms') return { name: 'terms', auth: false };
   if (path === '/cvs/new') return { name: 'upload', auth: true };
   if (path === '/apply') return { name: 'apply', auth: true, cvId: Number(cv || 0) };
 

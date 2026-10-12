@@ -78,5 +78,13 @@
     <circle cx="12" cy="13" r="3.4" />
   {:else if name === 'arrow'}
     <path d="M7 17 17 7M9 7h8v8" />
+  {:else if name === 'signin'}
+    <path d="M10 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v11.6A1.7 1.7 0 0 0 6.2 19.5H10" />
+    <path d="M10.2 12h9.3" />
+    <path d="m15.8 8.4 3.6 3.6-3.6 3.6" />
+  {:else if name === 'account'}
+    <circle cx="9.2" cy="8" r="2.8" />
+    <path d="M4.2 19.2a5 5 0 0 1 10 0" />
+    <path d="M17 7.6v5M14.5 10.1h5" />
   {/if}
 </svg>

@@ -116,7 +116,14 @@ button.text:active {
 .frame {
   max-width: 72rem;
   margin: 0 auto;
-  padding: 0 1.5rem 5rem;
+  padding: 0 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.frame main {
+  flex: 1 0 auto;
 }
 
 .frame.bare { padding-top: 2rem; }
@@ -125,7 +132,7 @@ button.text:active {
 .landing-frame .bar { margin-bottom: 1.5rem; }
 
 @media (max-width: 760px) {
-  .frame.bare { padding: 1rem 1rem 3rem; }
+  .frame.bare { padding: 1rem 1rem 1.5rem; }
 }
 
 .bar {
@@ -180,6 +187,10 @@ button.text:active {
   min-width: 0;
 }
 
+.bar nav:has(a.button) {
+  gap: 0.5rem;
+}
+
 .bar nav a {
   color: var(--muted);
   font-weight: 600;
@@ -192,6 +203,39 @@ button.text:active {
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 0.22em;
+}
+
+.bar nav a.button {
+  color: #fff;
+  font-size: 0.92rem;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.9rem;
+  gap: 0.4rem;
+}
+
+.bar nav a.button.secondary {
+  color: var(--ink);
+}
+
+.bar nav a.button:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.bar nav a.button.secondary:hover {
+  color: var(--ink);
+}
+
+.bar nav a.button[aria-current="page"] {
+  text-decoration: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.72);
+}
+
+.bar nav a.button.secondary[aria-current="page"] {
+  color: var(--accent-deep);
+  background: var(--canvas);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 
 .user-chip {
@@ -894,6 +938,14 @@ textarea:focus-visible {
     margin-left: 0;
     width: 100%;
     justify-content: space-between;
+  }
+
+  .bar nav:has(a.button) {
+    justify-content: stretch;
+  }
+
+  .bar nav a.button {
+    flex: 1;
   }
 
   .user-chip .account { max-width: 7rem; }
