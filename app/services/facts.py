@@ -183,7 +183,8 @@ def ground_gap(major: list[str], minor: list[str], report: GapReport) -> GapRepo
         key = canon_phrase(gap.skill)
         if key not in allowed:
             raise FactError(f"Gap skill is not missing: {gap.skill}")
-        text = " ".join([gap.why_it_matters, gap.practice, gap.project])
+        text = " ".join([gap.why_it_matters, gap.practice, gap.project, *gap.learn, gap.verify,
+                         *(resource.title for resource in gap.resources)])
         if claims_skill_on_cv(text):
             raise FactError("Advice tells them to claim a skill on the CV")
         if key in found:

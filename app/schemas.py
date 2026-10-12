@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 class Contact(BaseModel):
@@ -84,12 +84,28 @@ class CvDocument(BaseModel):
     education: list[Education]
 
 
+class LearningResource(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def safe_url(cls, value: str) -> str:
+        parsed = HttpUrl(value)
+        if parsed.scheme != "https" or parsed.username or parsed.password:
+            raise ValueError("Learning links must use HTTPS without embedded credentials.")
+        return str(parsed)
+
+
 class GapItem(BaseModel):
     skill: str
     severity: Literal["major", "minor"] = "major"
     why_it_matters: str
     practice: str
     project: str
+    learn: list[str] = Field(default_factory=list, max_length=6)
+    verify: str = ""
+    resources: list[LearningResource] = Field(default_factory=list, max_length=4)
 
 
 class GapReport(BaseModel):

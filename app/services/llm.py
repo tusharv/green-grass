@@ -170,7 +170,8 @@ def screen_work(client: ModelClient, profile: Profile, role_title: str, job: Job
 
 
 def _gap_once(
-    client: ModelClient, role_title: str, major: list[str], minor: list[str], note: str
+    client: ModelClient, role_title: str, major: list[str], minor: list[str], note: str,
+    profile: Profile | None = None, job_description: str = "",
 ) -> GapReport:
     user = (
         f"Role title: {role_title}\n"
@@ -179,16 +180,23 @@ def _gap_once(
         "Write a plan only for those skills."
         + note
     )
+    # Contact details are not needed to tailor a learning plan.
+    context = profile.model_dump(exclude={"contact"}) if profile else {}
+    user += "\n<resume>\n" + json.dumps(context) + "\n</resume>"
+    user += "\n<job>\n" + json.dumps({"role_title": role_title, "description": job_description}) + "\n</job>"
     result = complete_model(client, UPSKILL, user, GapReport)
     assert isinstance(result, GapReport)
     return result
 
 
-def write_gap(client: ModelClient, role_title: str, major: list[str], minor: list[str]) -> GapReport:
+def write_gap(
+    client: ModelClient, role_title: str, major: list[str], minor: list[str],
+    profile: Profile | None = None, job_description: str = "",
+) -> GapReport:
     note = ""
     last_error: FactError | None = None
     for _ in range(2):
-        report = _gap_once(client, role_title, major, minor, note)
+        report = _gap_once(client, role_title, major, minor, note, profile, job_description)
         try:
             return ground_gap(major, minor, report)
         except FactError as exc:

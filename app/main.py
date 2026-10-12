@@ -27,7 +27,7 @@ from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_setti
 from app.database import Base, make_engine, make_session_factory
 from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
 from app.schemas import CvDocument, GapReport, Profile
-from app.services.llm import ModelError, OllamaCloudClient
+from app.services.llm import ModelError, OllamaCloudClient, write_gap
 from app.services.logos import CompanyLogos
 from app.services.parser import UploadError, extract_text
 from app.services.pdf import render_pdf
@@ -314,6 +314,36 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     def get_application(application_id: int, request: Request, db: Session = Depends(get_db)):
         user = require_user(request, db)
         return _application_detail(owned_application(db, user, application_id))
+
+    @app.post("/api/applications/{application_id}/learning-plan")
+    def application_learning_plan(application_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        user = require_user(request, db)
+        row = owned_application(db, user, application_id)
+        cached = row.result_json.get("learning_plan") or {}
+        if cached.get("gaps") and all(
+            gap.get("learn") and gap.get("verify", "").strip() and gap.get("resources")
+            for gap in cached["gaps"]
+        ):
+            return _application_detail(row)
+        board = row.skill_board_json or {}
+        required = board.get("required") or []
+        major = [mark["name"] for mark in required if not mark["present"]]
+        minor = [mark["name"] for mark in board.get("preferred", []) if not mark["present"]]
+        # The fixed no-requirements and years-only outcomes remain the server's decision.
+        if not required or (not row.suitable and not major) or not (major or minor):
+            return _application_detail(row)
+        try:
+            report = write_gap(
+                model_client(), row.role_title, major, minor,
+                Profile.model_validate(row.cv.profile_json), row.job_description,
+            )
+        except ModelError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        row.result_json = {**row.result_json, "learning_plan": report.model_dump()}
+        db.commit()
+        db.refresh(row)
+        return _application_detail(row)
 
     @app.delete("/api/applications/{application_id}", status_code=204)
     def delete_application(application_id: int, request: Request, db: Session = Depends(get_db)):

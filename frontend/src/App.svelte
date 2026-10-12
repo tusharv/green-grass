@@ -146,7 +146,7 @@
       </section>
     {/if}
   </main>
-  {#if booted}
+  {#if booted && route.name !== 'profile'}
     <Credits quiet={route.name === 'home' && !session.user} />
   {/if}
 </div>

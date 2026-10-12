@@ -3,6 +3,8 @@
   import CvSheet from '../lib/CvSheet.svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
   import FitStrip from '../lib/FitStrip.svelte';
+  import GapRoadmap from '../lib/GapRoadmap.svelte';
+  import { learningPlan, hasLearningDetails } from '../lib/learning.js';
   import Icon from '../lib/Icon.svelte';
   import { navigate } from '../lib/nav.svelte.js';
   import RoleReview from '../lib/RoleReview.svelte';
@@ -14,10 +16,15 @@
   let pending = $state(false);
   let sharePending = $state(false);
   let copied = $state(false);
+  let learningPending = $state(false);
+  let learningError = $state('');
 
   onMount(async () => {
     try {
       row = await api(`/api/applications/${id}`);
+      if (canLearn && !hasLearningDetails(report)) {
+        await generateLearningPlan();
+      }
     } catch (err) {
       error = err.message;
     }
@@ -31,9 +38,24 @@
       ? board.preferred
       : (board.matched_preferred || []).map((name) => ({ name, present: true })),
   );
-  const gaps = $derived(row?.result?.report?.gaps || []);
-  const majors = $derived(gaps.filter((gap) => gap.severity !== 'minor'));
-  const minors = $derived(gaps.filter((gap) => gap.severity === 'minor'));
+  const report = $derived(row?.result?.learning_plan || row?.result?.report);
+  const plans = $derived(learningPlan(report));
+  const canLearn = $derived(Boolean(board.required?.length) &&
+    (suitable || board.required.some((mark) => !mark.present)) &&
+    [...(board.required || []), ...preferred].some((mark) => !mark.present));
+
+  async function generateLearningPlan() {
+    learningPending = true;
+    learningError = '';
+    try {
+      const updated = await api(`/api/applications/${id}/learning-plan`, { method: 'POST' });
+      row = { ...row, result: updated.result };
+    } catch (err) {
+      learningError = err.message;
+    } finally {
+      learningPending = false;
+    }
+  }
 
   async function publishProfile() {
     error = '';
@@ -135,48 +157,19 @@
         yearsNeeded={board.years_needed}
         yearsScore={board.years_score}
         coverage={board.coverage}
+        hasPlan={plans.length > 0 || canLearn}
       />
       <div class="review-content">
-        <RoleReview required={board.required || []} {preferred} {suitable} />
+        <RoleReview required={board.required || []} {preferred} {suitable} {plans} {canLearn} />
+        {#if plans.length || canLearn}
+          <GapRoadmap {plans} summary={report?.summary || ''} pending={learningPending} error={learningError} incomplete={canLearn && !hasLearningDetails(report)} onretry={generateLearningPlan} />
+        {/if}
         {#if suitable && row.result?.document}
           <section aria-labelledby="next-step">
             <h2 id="next-step" class="artifact-heading"><span aria-hidden="true">✓</span> Your tailored CV</h2>
             <p class="artifact-note">Review the wording below before downloading your PDF.</p>
             <CvSheet document={row.result.document} logosUrl={`/api/applications/${id}/logos`} />
           </section>
-        {:else if row.result?.report}
-          <div class="roadmap">
-            <h2 id="next-step" class="artifact-heading"><span aria-hidden="true">↗</span> Your practice plan</h2>
-            <p class="lede">{row.result.report.summary}</p>
-            {#if majors.length}
-              <p class="group-label">Major gaps · Start here</p>
-              {#each majors as gap, index}
-                <article class="major">
-                  <p class="step">{index + 1}</p>
-                  <h3>{gap.skill}</h3>
-                  <p>{gap.why_it_matters}</p>
-                  <h4><span aria-hidden="true">◎</span> Practice</h4>
-                  <p>{gap.practice}</p>
-                  <h4><span aria-hidden="true">◇</span> Put it into practice</h4>
-                  <p>{gap.project}</p>
-                </article>
-              {/each}
-            {/if}
-            {#if minors.length}
-              <p class="group-label">Preferred skills · Build on your progress</p>
-              {#each minors as gap, index}
-                <article class="minor">
-                  <p class="step">{majors.length + index + 1}</p>
-                  <h3>{gap.skill}</h3>
-                  <p>{gap.why_it_matters}</p>
-                  <h4><span aria-hidden="true">◎</span> Practice</h4>
-                  <p>{gap.practice}</p>
-                  <h4><span aria-hidden="true">◇</span> Put it into practice</h4>
-                  <p>{gap.project}</p>
-                </article>
-              {/each}
-            {/if}
-          </div>
         {/if}
       </div>
     </div>

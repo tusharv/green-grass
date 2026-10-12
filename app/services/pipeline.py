@@ -23,12 +23,12 @@ def empty_requirements_gap() -> GapReport:
     )
 
 
-def report_when_blocked(client: ModelClient, profile: Profile, job, role_title: str, fit: FitResult) -> GapReport:
+def report_when_blocked(client: ModelClient, profile: Profile, job, role_title: str, fit: FitResult, job_description: str = "") -> GapReport:
     major = [mark.name for mark in fit.required if not mark.present]
     minor = [mark.name for mark in fit.preferred if not mark.present]
     if not major:
         return years_gap(float(profile.years_experience or 0), required_years(job))
-    return write_gap(client, role_title, major, minor)
+    return write_gap(client, role_title, major, minor, profile, job_description)
 
 
 def analyze_role(
@@ -42,4 +42,4 @@ def analyze_role(
     fit = score_fit(profile, job, required, preferred)
     if fit.suitable:
         return fit, write_cv(client, profile, role_title, fit)
-    return fit, report_when_blocked(client, profile, job, role_title, fit)
+    return fit, report_when_blocked(client, profile, job, role_title, fit, job_description)
