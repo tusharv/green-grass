@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.5.0...v) (2026-10-13)
+
+
+### Features
+
+* updated lander and sample profile and report ([5b14152](https://github.com/tusharv/green-grass/commit/5b14152810020c6bf5fcc62b8e144722218cdc0d))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.4.1...v) (2026-10-12)
 
 
