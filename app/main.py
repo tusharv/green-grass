@@ -12,21 +12,25 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import __version__
+from app.admin_routes import register_admin_routes
 from app.auth import (
     check_password,
     csrf_token,
     current_user,
     hash_password,
+    impersonating_payload,
     label_from_filename,
     normalize_email,
     require_csrf,
     require_user,
+    sync_admin_flag,
     user_by_email,
+    user_payload,
     verify_password,
 )
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
 from app.cv_chat_routes import register_cv_chat
-from app.database import Base, make_engine, make_session_factory
+from app.database import Base, ensure_schema, make_engine, make_session_factory
 from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
 from app.schemas import CvDocument, GapReport, Profile, ResumeDesign
 from app.services.design import designed_html
@@ -57,11 +61,13 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     ensure_sqlite_parent(settings.database_url)
     engine = make_engine(settings.database_url)
     Base.metadata.create_all(engine)
+    ensure_schema(engine)
     session_factory = make_session_factory(engine)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         Base.metadata.create_all(engine)
+        ensure_schema(engine)
         yield
 
     app = FastAPI(title="Job Ready", lifespan=lifespan)
@@ -114,6 +120,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         return row
 
     register_cv_chat(app, get_db, owned_application, model_client, _application_detail)
+    register_admin_routes(app, get_db)
 
     @app.get("/health")
     def health():
@@ -124,7 +131,8 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = current_user(request, db)
         return {
             "csrf": csrf_token(request),
-            "user": None if user is None else {"id": user.id, "email": user.email},
+            "user": None if user is None else user_payload(user),
+            "impersonating": impersonating_payload(request, db),
         }
 
     @app.post("/api/register", status_code=201)
@@ -135,11 +143,13 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         if user_by_email(db, email) is not None:
             raise HTTPException(status_code=409, detail="That email is already registered.")
         user = User(email=email, password_hash=hash_password(password))
+        sync_admin_flag(user, settings.admin_emails)
         db.add(user)
         db.commit()
         db.refresh(user)
+        request.session.pop("impersonator_id", None)
         request.session["user_id"] = user.id
-        return {"id": user.id, "email": user.email}
+        return user_payload(user)
 
     @app.post("/api/login")
     def login(body: Credentials, request: Request, db: Session = Depends(get_db)):
@@ -148,8 +158,12 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = user_by_email(db, email)
         if user is None or not verify_password(body.password, user.password_hash):
             raise HTTPException(status_code=400, detail="Email or password does not match.")
+        sync_admin_flag(user, settings.admin_emails)
+        db.commit()
+        db.refresh(user)
+        request.session.pop("impersonator_id", None)
         request.session["user_id"] = user.id
-        return {"id": user.id, "email": user.email}
+        return user_payload(user)
 
     @app.post("/api/logout")
     def logout(request: Request):

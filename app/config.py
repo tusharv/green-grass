@@ -18,6 +18,7 @@ class Settings:
     ollama_host: str = "https://ollama.com"
     cookie_secure: bool = False
     max_upload_bytes: int = MAX_UPLOAD_BYTES
+    admin_emails: frozenset[str] = frozenset()
 
 
 def normalize_database_url(url: str) -> str:
@@ -40,6 +41,10 @@ def apply_env_file(path: Path) -> None:
             os.environ[key] = str(value).strip()
 
 
+def parse_admin_emails(raw: str | None) -> frozenset[str]:
+    return frozenset(part.strip().lower() for part in (raw or "").split(",") if part.strip())
+
+
 def load_settings() -> Settings:
     apply_env_file(Path(__file__).resolve().parent.parent / ".env")
     url = os.environ.get("DATABASE_URL", "sqlite:///./data/greengrass.db")
@@ -51,6 +56,7 @@ def load_settings() -> Settings:
         ollama_model=os.environ.get("OLLAMA_MODEL", "gemma4:31b"),
         ollama_host=os.environ.get("OLLAMA_HOST", "https://ollama.com"),
         cookie_secure=os.environ.get("COOKIE_SECURE", "0") == "1",
+        admin_emails=parse_admin_emails(os.environ.get("ADMIN_EMAILS")),
     )
 
 

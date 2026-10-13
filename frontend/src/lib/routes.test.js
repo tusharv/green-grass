@@ -22,3 +22,7 @@ test('private CV and application pages still require sign-in', () => {
     assert.equal(matchRoute(path).auth, true, path);
   }
 });
+
+test('admin console requires sign-in and admin flag', () => {
+  assert.deepEqual(matchRoute('/admin'), { name: 'admin', auth: true, admin: true });
+});

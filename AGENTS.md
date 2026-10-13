@@ -56,20 +56,22 @@ The application page can propose source-CV edits through private chat. `app/serv
 - `app/services/parser.py` — PDF and DOCX text only
 - `app/services/pdf.py` — HTML and WeasyPrint for a suitable CV
 - `app/services/photos.py` — profile photo re-encoding (square JPEG, no metadata) and the GitHub handle from CV links
-- `app/auth.py` — Argon2, email, CSRF, session user
-- `frontend/src/pages/` — Login, Register, Dashboard, Upload, CvDetail, Apply, Result, Profile
+- `app/auth.py` — Argon2, email, CSRF, session user, admin flag, view-as-user
+- `app/admin_routes.py` — ops console APIs for listing/editing any user's CVs and role checks
+- `frontend/src/pages/` — Login, Register, Dashboard, Upload, CvDetail, Apply, Result, Profile, Admin
 - `frontend/src/lib/routes.js` — the only client routes
 - `tests/` — pytest. API tests use `ScriptedModel` and do not call Ollama
 
 ## Routes
 
-Client: `/` desk, `/login`, `/register`, `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{first}-{last}-{hash}` (no sign-in). The hash is 16 hex characters. A single name, or a name with no ASCII letters, uses that one word or `profile` before the hash.
+Client: `/` desk, `/login`, `/register`, `/admin` (admins only), `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{first}-{last}-{hash}` (no sign-in). The hash is 16 hex characters. A single name, or a name with no ASCII letters, uses that one word or `profile` before the hash.
 
 API, all under the signed-in user except session, register, login, and the public profile:
 
 - `GET /health`
-- `GET /api/session` returns `{ csrf, user }`
+- `GET /api/session` returns `{ csrf, user, impersonating }`. `user` includes `is_admin`. `ADMIN_EMAILS` (comma-separated) sets `is_admin` on register/login.
 - `POST /api/register`, `/api/login`, `/api/logout`
+- Admin ops (`is_admin` required; uses the real admin account even while viewing as a user): `GET /api/admin/users`, `GET /api/admin/users/{id}`, `GET|PATCH|DELETE /api/admin/cvs/{id}`, `GET|PATCH|DELETE /api/admin/applications/{id}`, `POST /api/admin/impersonate/{user_id}`, `POST /api/admin/stop-impersonation`. Admin patches are support overrides; fit math remains code-owned for normal role checks.
 - `GET|POST /api/cvs`, `GET|DELETE /api/cvs/{id}`. Deleting a CV deletes its role checks and its photo.
 - `GET|POST|DELETE /api/cvs/{id}/photo`, `POST /api/cvs/{id}/photo/github`. A photo is JPEG, PNG, or WebP up to 3 MB, stored only as a 640px square JPEG. With no choice saved, a GitHub link on the CV supplies the photo. DELETE means no photo, not "fall back to GitHub". LinkedIn photos cannot be fetched; people upload instead.
 - `GET|POST /api/applications`, `GET|DELETE /api/applications/{id}`. Deleting a role check leaves the CV.

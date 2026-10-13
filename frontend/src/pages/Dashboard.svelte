@@ -71,7 +71,12 @@
         <p class="lede">Your next step starts here. Check your CV against a role and see what’s ready or what to build next.</p>
       </div>
     </div>
-    <a class="button" href="/cvs/new"><Icon name="upload" size={18} /> Upload a CV</a>
+    <div class="welcome-actions">
+      {#if session.user?.is_admin && !session.impersonating}
+        <a class="button secondary" href="/admin">Admin console</a>
+      {/if}
+      <a class="button" href="/cvs/new"><Icon name="upload" size={18} /> Upload a CV</a>
+    </div>
   </header>
 
   {#if error}<p class="alert" role="alert">{error}</p>{/if}

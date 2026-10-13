@@ -86,5 +86,8 @@
     <circle cx="9.2" cy="8" r="2.8" />
     <path d="M4.2 19.2a5 5 0 0 1 10 0" />
     <path d="M17 7.6v5M14.5 10.1h5" />
+  {:else if name === 'user'}
+    <circle cx="12" cy="8" r="3.1" />
+    <path d="M5 19.2a7 7 0 0 1 14 0" />
   {/if}
 </svg>

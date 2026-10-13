@@ -5,6 +5,7 @@ export function matchRoute(full) {
 
   if (path === '/login') return { name: 'login', auth: false };
   if (path === '/register') return { name: 'register', auth: false };
+  if (path === '/admin') return { name: 'admin', auth: true, admin: true };
   if (path === '/privacy') return { name: 'privacy', auth: false };
   if (path === '/terms') return { name: 'terms', auth: false };
   const sample = path.match(/^\/samples\/(ready|gaps)\/(profile|evaluation)$/);

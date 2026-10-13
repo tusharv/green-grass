@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { followLink, locationState, navigate } from './lib/nav.svelte.js';
   import { matchRoute } from './lib/routes.js';
-  import { api, loadSession, session } from './lib/session.svelte.js';
+  import { api, applySessionUser, loadSession, session } from './lib/session.svelte.js';
   import Icon from './lib/Icon.svelte';
   import BrandLogo from './lib/BrandLogo.svelte';
   import Credits from './lib/Credits.svelte';
@@ -17,12 +17,14 @@
   import Result from './pages/Result.svelte';
   import Profile from './pages/Profile.svelte';
   import Legal from './pages/Legal.svelte';
+  import Admin from './pages/Admin.svelte';
   import SampleEvaluation from './pages/SampleEvaluation.svelte';
   import { getSample } from './lib/samples.js';
 
   let booted = $state(false);
   const route = $derived(matchRoute(locationState.path));
   const userInitials = $derived(getInitials(session.user?.email));
+  const isRealAdmin = $derived(Boolean(session.user?.is_admin && !session.impersonating));
 
   onMount(async () => {
     const onPop = () => {
@@ -46,6 +48,7 @@
     if (!booted || !session.ready) return;
     if (!session.user && route.auth) navigate('/login');
     if (session.user && (route.name === 'login' || route.name === 'register')) navigate('/');
+    if (route.admin && session.user && !isRealAdmin) navigate('/');
   });
 
   function onMainClick(event) {
@@ -63,9 +66,19 @@
     } catch {
       /* The session is cleared locally either way. */
     }
-    session.user = null;
+    applySessionUser(null, null);
     navigate('/login');
     await loadSession();
+  }
+
+  async function stopImpersonation() {
+    try {
+      const data = await api('/api/admin/stop-impersonation', { method: 'POST' });
+      applySessionUser(data.user, null);
+      navigate('/admin');
+    } catch (err) {
+      session.ready = true;
+    }
   }
 </script>
 
@@ -96,6 +109,14 @@
           aria-current={route.name === 'home' ? 'page' : undefined}
           onclick={(event) => followLink(event, '/')}
         ><Icon name="desk" size={16} /> Desk</a>
+        {#if isRealAdmin}
+          <a
+            class="desk-link"
+            href="/admin"
+            aria-current={route.name === 'admin' ? 'page' : undefined}
+            onclick={(event) => followLink(event, '/admin')}
+          >Admin</a>
+        {/if}
         <div class="user-chip" title={session.user.email}>
           <span class="user-avatar" aria-hidden="true">{userInitials}</span>
           <span class="account">{session.user.email}</span>
@@ -118,6 +139,12 @@
     </nav>
   </header>
   {/if}
+  {#if session.impersonating}
+    <div class="impersonation-banner" role="status">
+      <span>Viewing as <strong>{session.impersonating.email}</strong></span>
+      <button type="button" class="button secondary" onclick={stopImpersonation}>Exit</button>
+    </div>
+  {/if}
   <main>
     {#if !booted}
       {#if route.name !== 'profile'}<p class="hint">Loading…</p>{/if}
@@ -131,6 +158,8 @@
       <Landing />
     {:else if route.auth && !session.user}
       <p class="hint">Loading…</p>
+    {:else if route.name === 'admin'}
+      {#if isRealAdmin}<Admin />{:else}<p class="hint">Loading…</p>{/if}
     {:else if route.name === 'upload'}
       <Upload />
     {:else if route.name === 'cv'}

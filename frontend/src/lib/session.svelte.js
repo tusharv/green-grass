@@ -1,5 +1,6 @@
 export const session = $state({
   user: null,
+  impersonating: null,
   csrf: '',
   ready: false,
 });
@@ -39,7 +40,13 @@ export async function api(path, options = {}) {
 export async function loadSession() {
   const data = await api('/api/session');
   session.user = data.user;
+  session.impersonating = data.impersonating || null;
   session.csrf = data.csrf;
   session.ready = true;
   return data;
+}
+
+export function applySessionUser(user, impersonating = null) {
+  session.user = user;
+  session.impersonating = impersonating;
 }

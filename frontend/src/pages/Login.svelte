@@ -1,5 +1,5 @@
 <script>
-  import { api, session } from '../lib/session.svelte.js';
+  import { api, applySessionUser } from '../lib/session.svelte.js';
   import { navigate } from '../lib/nav.svelte.js';
 
   let email = $state('');
@@ -13,7 +13,7 @@
     busy = true;
     try {
       const user = await api('/api/login', { method: 'POST', json: { email, password } });
-      session.user = user;
+      applySessionUser(user, null);
       navigate('/');
     } catch (err) {
       error = err.message;
