@@ -17,6 +17,8 @@
   import Result from './pages/Result.svelte';
   import Profile from './pages/Profile.svelte';
   import Legal from './pages/Legal.svelte';
+  import SampleEvaluation from './pages/SampleEvaluation.svelte';
+  import { getSample } from './lib/samples.js';
 
   let booted = $state(false);
   const route = $derived(matchRoute(locationState.path));
@@ -74,11 +76,13 @@
       ? 'Privacy | Job Ready'
       : route.name === 'terms'
         ? 'Terms and conditions | Job Ready'
+        : route.name === 'sample-evaluation'
+          ? `${getSample(route.sample)?.name || 'Sample'} evaluation | Job Ready`
         : 'Job Ready'}</title>
 </svelte:head>
 
-<div class="frame" class:bare={route.name === 'profile'} class:landing-frame={route.name === 'home' && !session.user}>
-  {#if route.name !== 'profile'}
+<div class="frame" class:bare={route.name === 'profile' || route.name === 'sample-profile'} class:landing-frame={route.name === 'home' && !session.user}>
+  {#if route.name !== 'profile' && route.name !== 'sample-profile'}
   <header class="bar">
     <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
       <BrandLogo size={28} />
@@ -137,6 +141,11 @@
       <Result id={route.id} />
     {:else if route.name === 'profile'}
       <Profile token={route.token} />
+    {:else if route.name === 'sample-profile'}
+      <Profile token={`sample-${route.sample}`} />
+    {:else if route.name === 'sample-evaluation'}
+      {@const sample = getSample(route.sample)}
+      {#if sample}<SampleEvaluation {sample} />{:else}<p class="hint">That sample is unavailable.</p>{/if}
     {:else if route.name === 'privacy' || route.name === 'terms'}
       <Legal page={route.name} />
     {:else}
@@ -146,7 +155,7 @@
       </section>
     {/if}
   </main>
-  {#if booted && route.name !== 'profile'}
+  {#if booted && route.name !== 'profile' && route.name !== 'sample-profile'}
     <Credits quiet={route.name === 'home' && !session.user} />
   {/if}
 </div>

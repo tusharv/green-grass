@@ -1,7 +1,18 @@
 <script>
   import focusedCv from '../assets/landing-focused-cv.jpg';
   import nextStep from '../assets/landing-build-your-next-step.jpg';
+  import chatImage from '../assets/landing-feature-chat.webp';
+  import profileImage from '../assets/landing-feature-profile.webp';
+  import themesImage from '../assets/landing-feature-themes.webp';
+  import pdfImage from '../assets/landing-feature-pdf.webp';
   import Icon from '../lib/Icon.svelte';
+
+  const features = [
+    { title: 'Resume review', image: focusedCv, width: 1200, height: 1200, alt: 'Scattered applications become one focused CV beside a role on green steps.', text: 'See which job requirements your experience supports and which skills are missing. Get a clear next step for this role.' },
+    { title: 'Themes that feel like you', image: themesImage, width: 1200, height: 800, alt: 'Three paper CV layouts with a fan of green and grey colour swatches.', text: 'Choose from four templates, then adjust colours, fonts and layout. Your saved design carries through to your public profile and eligible PDF.' },
+    { title: 'Download as PDF', image: pdfImage, width: 1200, height: 800, alt: 'A finished paper CV in a green document tray beside a download arrow.', text: 'When your result is Ready to send, download a fact-checked CV as a polished PDF, styled with your chosen theme.' },
+    { title: 'A plan to close the gaps', image: nextStep, width: 1200, height: 1200, alt: 'A practice workbook and learning blocks build the next step on a green staircase.', text: 'Missing a required skill? Get a focused learning plan, with the most important gaps first and practical ways to build experience.' },
+  ];
 
   const steps = [
     { icon: 'cv', title: 'Bring the work you’ve actually done.', text: 'Upload your existing CV as a text PDF or DOCX. Job Ready reads your skills, work history, and education.' },
@@ -25,6 +36,40 @@
       <svg class="hero-steps" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M10 150V80H80V10H150" stroke="currentColor" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" /></svg>
       <img src={focusedCv} width="1200" height="1200" alt="Job Ready’s steps logo on a green staircase, carrying scattered applications toward one focused CV and role." fetchpriority="high" />
     </figure>
+  </section>
+
+  <section id="features" class="landing-features" aria-labelledby="features-title">
+    <div class="features-heading">
+      <h2 id="features-title">Review it. Refine it. Make it yours.</h2>
+      <p>From understanding your fit to sharing your experience, keep your next application in one place.</p>
+    </div>
+    <div class="feature-spotlights">
+      <article class="feature-spotlight">
+        <img src={chatImage} width="1200" height="800" alt="Paper conversation bubbles beside a CV with an approval seal." loading="lazy" decoding="async" />
+        <div class="spotlight-copy">
+          <h3>AI updates through chat</h3>
+          <p>Tell Job Ready about work your CV is missing. Get proposed edits to your summary, skills and work bullets, then confirm they’re accurate before applying them.</p>
+          <span class="feature-detail">Private chat. You approve every update.</span>
+        </div>
+      </article>
+      <article class="feature-spotlight">
+        <img src={profileImage} width="1200" height="800" alt="An upright paper profile with interlocking links for sharing." loading="lazy" decoding="async" />
+        <div class="spotlight-copy">
+          <h3>A public profile, ready to share</h3>
+          <p>Give employers a link to your CV, with your chosen design and photo. They see your experience; your assessment, practice plan and chat stay private.</p>
+          <span class="feature-detail">Publish when you choose. Remove the link anytime.</span>
+        </div>
+      </article>
+    </div>
+    <div class="feature-grid">
+      {#each features as feature}
+        <article class="feature-item">
+          <div class="feature-image"><img src={feature.image} width={feature.width} height={feature.height} alt={feature.alt} loading="lazy" decoding="async" /></div>
+          <h3>{feature.title}</h3>
+          <p>{feature.text}</p>
+        </article>
+      {/each}
+    </div>
   </section>
 
   <section class="landing-intro" aria-labelledby="intro-title">
@@ -104,6 +149,23 @@
     </div>
   </section>
 
+  <section id="samples" class="landing-samples" aria-labelledby="samples-title">
+    <div class="outcomes-heading">
+      <h2 id="samples-title">See a sample profile and review.</h2>
+      <p>Explore two fictional applications, from shared profile to the evidence behind the result.</p>
+    </div>
+    <div class="sample-grid">
+      <article class="sample-card sample-ready">
+        <div><span class="sample-kicker">FICTIONAL SAMPLE</span><h3>Frontend Developer</h3><p>See how relevant experience supports a Ready to send result.</p></div>
+        <div class="sample-links"><a href="/samples/ready/profile">View sample profile <Icon name="arrow" size={16} /></a><a href="/samples/ready/evaluation">View sample evaluation <Icon name="arrow" size={16} /></a></div>
+      </article>
+      <article class="sample-card sample-gaps">
+        <div><span class="sample-kicker">FICTIONAL SAMPLE</span><h3>Data Analyst</h3><p>See how missing requirements and experience lead to Gaps to close.</p></div>
+        <div class="sample-links"><a href="/samples/gaps/profile">View sample profile <Icon name="arrow" size={16} /></a><a href="/samples/gaps/evaluation">View sample evaluation <Icon name="arrow" size={16} /></a></div>
+      </article>
+    </div>
+  </section>
+
   <section class="landing-principle" aria-labelledby="principle-title">
     <span class="principle-mark" aria-hidden="true"><Icon name="cv" size={30} /></span>
     <h2 id="principle-title">Make your relevance clear.<br />Keep your story true.</h2>
@@ -125,6 +187,14 @@
       <details>
         <summary>Does AI decide whether I’m ready?</summary>
         <p>No. Fixed rules check your skills and experience against the job requirements. AI helps read the documents and write the result, but it doesn’t decide which outcome you get.</p>
+      </details>
+      <details>
+        <summary>Can I update my CV through chat?</summary>
+        <p>Yes. Use the private chat on a role check to describe your experience. AI proposes changes to your summary, skills and existing work bullets. Nothing is applied until you confirm the edits are accurate. Applying them updates your saved CV and reassesses that role.</p>
+      </details>
+      <details>
+        <summary>Can I change how my CV looks?</summary>
+        <p>Choose Classic, Modern, Creative or Minimal, then customise colours, fonts, spacing and your photo. Save the design for that role check to update its public profile and any eligible PDF download. A PDF is available only for a Ready to send result.</p>
       </details>
       <details>
         <summary>Can I share my CV with an employer?</summary>
@@ -158,6 +228,29 @@
   .hero-image { margin: 0; position: relative; padding: 0 0 1.5rem 1.5rem; }
   .hero-steps { position: absolute; width: 8rem; height: 8rem; left: -0.6rem; bottom: 0; color: #c5dbce; }
   .hero-image img { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; border-radius: var(--radius-surface); }
+  .landing-features { margin-top: var(--landing-space); scroll-margin-top: 2rem; }
+  .features-heading { max-width: 42rem; margin-bottom: 2.2rem; }
+  .features-heading h2 { margin: 0 0 1rem; }
+  .features-heading p { margin: 0; max-width: 35rem; line-height: 1.65; }
+  .feature-spotlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+  .feature-spotlight { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-surface); background: var(--paper); }
+  .feature-spotlight > img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; }
+  .spotlight-copy { padding: clamp(1.3rem, 3vw, 2rem); }
+  .spotlight-copy h3 { font-family: var(--serif); font-size: clamp(1.5rem, 2.5vw, 1.9rem); font-weight: 500; letter-spacing: -0.025em; margin: 0 0 0.8rem; line-height: 1.2; }
+  .spotlight-copy p { font-size: 0.98rem; line-height: 1.7; margin: 0 0 1.3rem; }
+  .feature-detail { display: block; color: var(--accent-deep); font-size: 0.82rem; line-height: 1.6; font-weight: 600; }
+  .feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin-top: 2.5rem; }
+  .feature-item { min-width: 0; }
+  .feature-image { background: #f6f7f6; border-radius: var(--radius-surface); overflow: hidden; aspect-ratio: 1; }
+  .feature-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .feature-item h3 { font-size: 1.06rem; line-height: 1.4; margin: 1.2rem 0 0.6rem; font-weight: 600; }
+  .feature-item p { font-size: 0.9rem; line-height: 1.7; margin: 0; }
+  @media (max-width: 1000px) { .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.5rem; } }
+  @media (max-width: 600px) {
+    .feature-spotlights, .feature-grid { grid-template-columns: minmax(0, 1fr); }
+    .feature-grid { gap: 2rem; }
+    .feature-image { aspect-ratio: 3 / 2; }
+  }
   .landing-intro { max-width: 48rem; margin: var(--landing-space) auto; text-align: center; }
   .landing-intro h2 { margin: 0 0 1.3rem; }
   .landing-intro p { max-width: 36rem; margin: 0 auto; line-height: 1.75; }
@@ -179,6 +272,15 @@
   .landing-outcome { border-radius: var(--radius-surface); padding: clamp(1.5rem, 3.5vw, 2.8rem); }
   .outcome-ready { background: #e6eee7; }
   .outcome-grow { background: #edf0ec; }
+  .landing-samples { margin-top: var(--landing-space); }
+  .sample-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.2rem; }
+  .sample-card { display:flex; flex-direction:column; justify-content:space-between; gap:1.5rem; padding:clamp(1.5rem,3.5vw,2.4rem); border:1px solid var(--line); border-radius:var(--radius-surface); background:#f4f7f4; }
+  .sample-gaps { background:#f7f3f0; }
+  .sample-kicker { color:var(--accent-deep); font-size:.7rem; font-weight:700; letter-spacing:.09em; }
+  .sample-card h3 { margin:.8rem 0 .5rem; font:500 1.8rem/1.2 var(--serif); }
+  .sample-card p { margin:0; max-width:30rem; line-height:1.65; }
+  .sample-links { display:flex; gap:.8rem 1.5rem; flex-wrap:wrap; padding-top:1rem; border-top:1px solid var(--line); }
+  .sample-links a { display:inline-flex; align-items:center; gap:.45rem; font-weight:600; font-size:.9rem; }
   .outcome-art { color: var(--accent-deep); height: 8rem; margin: 0 0 1.6rem; }
   .outcome-art svg { display: block; width: 100%; height: 100%; }
   .landing-outcome h3 { font-family: var(--serif); font-weight: 500; font-size: 1.8rem; letter-spacing: -0.025em; }
@@ -233,7 +335,7 @@
     .journey > span:not(.journey-join):not(.journey-line) { font-size: 0.85rem; }
     .landing-process, .landing-faq { grid-template-columns: 1fr; gap: 2rem; }
     .process-image img { height: auto; min-height: 0; aspect-ratio: 1; }
-    .outcome-grid { grid-template-columns: 1fr; }
+    .outcome-grid, .sample-grid { grid-template-columns: 1fr; }
     .landing-footer { align-items: flex-start; flex-direction: column; gap: 1rem; }
     .landing-footer p span { display: block; margin: 0.35rem 0 0; }
   }

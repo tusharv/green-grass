@@ -7,6 +7,8 @@ export function matchRoute(full) {
   if (path === '/register') return { name: 'register', auth: false };
   if (path === '/privacy') return { name: 'privacy', auth: false };
   if (path === '/terms') return { name: 'terms', auth: false };
+  const sample = path.match(/^\/samples\/(ready|gaps)\/(profile|evaluation)$/);
+  if (sample) return { name: sample[2] === 'profile' ? 'sample-profile' : 'sample-evaluation', auth: false, sample: sample[1] };
   if (path === '/cvs/new') return { name: 'upload', auth: true };
   if (path === '/apply') return { name: 'apply', auth: true, cvId: Number(cv || 0) };
 

@@ -5,6 +5,7 @@
   import CompanyLogo from '../lib/CompanyLogo.svelte';
   import Icon from '../lib/Icon.svelte';
   import { api } from '../lib/session.svelte.js';
+  import { getSample } from '../lib/samples.js';
 
   const SKILL_PREVIEW = 18;
 
@@ -38,6 +39,13 @@
   );
 
   onMount(async () => {
+    if (token.startsWith('sample-')) {
+      const sample = getSample(token.slice('sample-'.length));
+      if (sample) {
+        profile = { ...sample.profile, sample: true };
+        return;
+      }
+    }
     try {
       profile = await api(`/api/profiles/${encodeURIComponent(token)}`);
     } catch (err) {
@@ -173,7 +181,8 @@
 {:else if profile.design_html}
   <DesignDocument logosUrl={logos} html={profile.design_html} title={`${profile.name} — shared profile`} />
 {:else}
-  <article class="pf">
+  <article class="pf" class:sample-ink={profile.variant === 'ink'} class:sample-studio={profile.variant === 'studio'}>
+    {#if profile.sample}<p class="pf-sample-note"><strong>Fictional sample profile</strong><span>This example uses fictional details to show how a shared profile can look.</span><a href="/samples/{token.slice('sample-'.length)}/evaluation">View sample evaluation</a></p>{/if}
     <header class="pf-hero">
       <div class="pf-turf" aria-hidden="true"></div>
       <p class="pf-for"><span>Shared for</span> {profile.role_title}</p>
@@ -333,6 +342,10 @@
   .customize-float:hover .customize-label, .customize-float:focus-visible .customize-label { opacity:1; }
   @media print { .profile-owner-actions { display:none; } }
 
+  .pf-sample-note { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 1.2rem; margin: 0; color: var(--accent-deep); background: #e6eee7; border-bottom: 1px solid var(--line); font-size: 0.86rem; }
+  .pf-sample-note strong { white-space: nowrap; }
+  .pf-sample-note span { color: var(--muted); }
+  .pf-sample-note a { margin-left:auto; flex:none; font-weight:600; }
   .pf {
     --turf: #0f5a3c;
     --turf-light: #146a48;
@@ -344,6 +357,12 @@
     gap: 1.25rem;
     padding-top: 0.5rem;
   }
+  .pf.sample-ink { --turf:#202f49; --turf-light:#344967; --turf-ink:#142239; --highlight:#d8e5f2; --soft:#f4f7fa; --line:#d3dce7; }
+  .pf.sample-ink .pf-turf { background:linear-gradient(180deg,rgba(9,18,34,0) 40%,rgba(9,18,34,.3)), repeating-linear-gradient(112deg,var(--turf) 0 54px,var(--turf-light) 54px 108px); }
+  .pf.sample-ink .pf-for { background:rgba(221,233,247,.15); }
+  .pf.sample-studio { --turf:#a9583f; --turf-light:#d48661; --turf-ink:#703725; --highlight:#fde0c7; --soft:#fff8f2; --line:#ecd9cc; --shadow:0 12px 30px -30px rgba(112,55,37,.38); gap:1rem; }
+  .pf.sample-studio .pf-turf { background:linear-gradient(180deg,rgba(80,27,12,0) 40%,rgba(80,27,12,.28)), repeating-linear-gradient(112deg,var(--turf) 0 54px,var(--turf-light) 54px 108px); }
+  .pf.sample-studio .pf-for { background:rgba(255,244,232,.16); }
 
   /* Hero */
   .pf-hero {
@@ -436,6 +455,30 @@
   .pf-actions { display: flex; flex-direction: column; gap: 0.55rem; align-items: stretch; }
   .pf-cta { background: var(--turf); }
   .pf-cta:hover { background: var(--turf-ink); }
+
+  /* The studio sample uses a compact editorial masthead instead of the portrait-over-cover layout. */
+  .pf.sample-studio .pf-hero { border-radius: 10px 10px 28px 28px; background: var(--soft); }
+  .pf.sample-studio .pf-turf { height: 108px; }
+  .pf.sample-studio .pf-id {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 1.25rem;
+    row-gap: 0.25rem;
+    margin-top: 0;
+    padding: 1.55rem 2rem 1.85rem;
+  }
+  .pf.sample-studio .pf-id :global(.pf-portrait) {
+    --size: 98px;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    box-shadow: 0 0 0 5px #fff, 0 13px 26px -17px rgba(112, 55, 37, 0.65);
+  }
+  .pf.sample-studio .pf-name { grid-column: 1; grid-row: 1; padding-top: 0; }
+  .pf.sample-studio .pf-actions { grid-column: 1; grid-row: 2; flex-direction: row; align-items: flex-start; margin-top: 0.8rem; }
+  .pf.sample-studio .pf-tabs { width: 100%; border-radius: 10px; background: var(--soft); box-shadow: none; }
+  .pf.sample-studio .pf-main, .pf.sample-studio .pf-card { border-radius: 10px; box-shadow: none; }
+  .pf.sample-studio .pf-logo :global(.company-logo) { border-radius: 50%; background: var(--highlight); }
+  .pf.sample-studio .pf-bullets li::before { border-radius: 50%; }
 
   /* Section tabs */
   .pf-tabs {
@@ -667,6 +710,8 @@
   }
 
   @media (max-width: 760px) {
+    .pf-sample-note { align-items:flex-start; flex-direction:column; gap:.35rem; }
+    .pf-sample-note a { margin-left:0; }
     .pf-turf { height: 132px; }
     .pf-id {
       grid-template-columns: 1fr;
@@ -690,6 +735,10 @@
     .pf-logo :global(.company-logo) { width: 38px; height: 38px; flex-basis: 38px; border-radius: 10px; }
     .pf-logo :global(.company-logo img) { top: 5px; left: 5px; width: 26px; height: 26px; }
     .pf-dates { white-space: normal; }
+    .pf.sample-studio .pf-id { grid-template-columns: 1fr; grid-template-rows: auto; padding: 0 1.25rem 1.5rem; margin-top: -54px; }
+    .pf.sample-studio .pf-id :global(.pf-portrait), .pf.sample-studio .pf-name, .pf.sample-studio .pf-actions { grid-column: auto; grid-row: auto; }
+    .pf.sample-studio .pf-id :global(.pf-portrait) { --size: 112px; }
+    .pf.sample-studio .pf-actions { align-items: stretch; margin-top: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
