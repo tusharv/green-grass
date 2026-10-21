@@ -5,12 +5,14 @@ from pathlib import Path
 
 from app.schemas import CvDocument, ResumeDesign
 from app.services.design import designed_html
+from app.services.design_icons import icon
 
 
-def _section(title: str, body: str) -> str:
+def _section(title: str, body: str, symbol: str) -> str:
     if not body:
         return ""
-    return f"<h2>{escape(title)}</h2>{body}"
+    mark = icon(symbol).replace('stroke="currentColor"', 'stroke="#1a1a1a"')
+    return f"<h2>{mark}<span>{escape(title)}</span></h2>{body}"
 
 
 def document_html(document: CvDocument) -> str:
@@ -50,34 +52,41 @@ def document_html(document: CvDocument) -> str:
       font-size: 11pt;
       line-height: 1.4;
     }}
-    h1 {{ font-size: 22pt; margin: 0; font-weight: 700; letter-spacing: -0.03em; }}
-    .contact {{ margin: 4px 0 0; color: #5c5348; font-family: "Liberation Sans", sans-serif; font-size: 10pt; }}
-    .rule {{ border: 0; border-top: 1px solid #1a1a1a; margin: 10px 0 4px; }}
+    h1 {{ font-size: 26pt; margin: 0; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }}
+    .contact {{ margin: 6px 0 0; color: #5c5348; font-family: "Liberation Sans", sans-serif; font-size: 10pt; }}
+    .rule {{ border: 0; border-top: 1px solid #1a1a1a; margin: 12px 0 2px; }}
     h2 {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-family: "Liberation Sans", sans-serif;
       font-size: 9pt;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 700;
       border-bottom: 1px solid #d9d2c5;
-      margin: 14px 0 8px;
-      padding-bottom: 3px;
+      margin: 16px 0 8px;
+      padding-bottom: 4px;
     }}
+    h2 .design-icon {{ width: 13px; height: 13px; flex: 0 0 auto; }}
     p {{ margin: 0 0 6px; }}
-    .role-line {{ display: flex; justify-content: space-between; gap: 12px; font-size: 12pt; margin: 0; }}
-    .employer {{ margin: 0 0 4px; }}
-    ul {{ margin: 4px 0 10px; padding-left: 1.1em; }}
+    .role {{ margin: 0 0 12px; }}
+    .role-line {{ display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 12pt; margin: 0; }}
+    .role-line span {{ font-family: "Liberation Sans", sans-serif; font-size: 10pt; font-weight: 600; color: #5c5348; font-variant-numeric: tabular-nums; }}
+    .employer {{ margin: 1px 0 4px; font-family: "Liberation Sans", sans-serif; }}
+    ul {{ margin: 4px 0 8px; padding-left: 1.15em; }}
     li {{ margin: 2px 0; }}
+    li::marker {{ color: #5c5348; }}
   </style>
 </head>
 <body>
   <h1>{escape(contact.name or "CV")}</h1>
   <p class="contact">{contact_line}</p>
   <hr class="rule">
-  {_section("Summary", f"<p>{escape(document.summary)}</p>" if document.summary else "")}
-  {_section("Experience", "".join(roles))}
-  {_section("Skills", f"<p>{skills}</p>" if skills else "")}
-  {_section("Education", "".join(schools))}
+  {_section("Summary", f"<p>{escape(document.summary)}</p>" if document.summary else "", "summary")}
+  {_section("Experience", "".join(roles), "role")}
+  {_section("Skills", f"<p>{skills}</p>" if skills else "", "skills")}
+  {_section("Education", "".join(schools), "education")}
 </body>
 </html>"""
 

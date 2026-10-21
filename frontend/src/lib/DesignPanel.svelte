@@ -4,10 +4,10 @@
   import DesignDocument from './DesignDocument.svelte';
   let { id, saved = null, onsave = () => {} } = $props();
   const templates = [
-    {id:'classic',name:'Classic',note:'Timeless serif · One column'},
-    {id:'modern',name:'Modern',note:'Clean typography · Skills sidebar'},
-    {id:'creative',name:'Creative',note:'Bold header · Contrasting sidebar'},
-    {id:'minimal',name:'Minimal',note:'Quiet headings · Compact layout'},
+    {id:'classic',name:'Classic',note:'Ivy League · Centred masthead'},
+    {id:'modern',name:'Modern',note:'Double column · Skills rail'},
+    {id:'creative',name:'Creative',note:'Colour masthead · Photo band'},
+    {id:'minimal',name:'Minimal',note:'Elegant · Single column'},
   ];
   const palettes = [
     {id:'forest',name:'Forest & mist',accent:'#245747',paper:'#f1f6f2'},
@@ -70,7 +70,7 @@
 </script>
 <section class="design-panel" id="design-editor">
   <button class="design-toggle" type="button" aria-expanded={open} onclick={() => open = !open}>
-    <span><strong>Design your profile &amp; CV</strong><small>Four templates. Your colour, type and layout.</small></span><span aria-hidden="true">{open ? '−' : '+'}</span>
+    <span><strong>Design your profile &amp; CV</strong><small>Four recruiter-ready layouts. Colour, type and section order.</small></span><span aria-hidden="true">{open ? '−' : '+'}</span>
   </button>
   {#if open}
     <div class="template-list" aria-label="Choose a template">
@@ -125,7 +125,18 @@
 .thumbnail i { display:block; width:70%; height:8px; background:var(--ink); margin-bottom:8px; }
 .thumbnail b { display:block; height:2px; background:var(--ink); margin-bottom:10px; }
 .thumbnail em { display:block; height:12px; margin:5px 0; background:repeating-linear-gradient(#d4d9dd 0 2px,transparent 2px 5px); }
-.thumbnail.modern { border-left:16px solid var(--ink); }.thumbnail.creative { border-top:25px solid var(--ink); border-left:14px solid #e3e9ed; }.thumbnail.minimal b { background:#ddd; }.thumbnail.minimal i { height:5px; }
+.thumbnail { position:relative; overflow:hidden; }
+.thumbnail::after { content:''; position:absolute; width:68px; height:68px; right:-28px; top:-24px; border:1px solid var(--ink); border-radius:50%; opacity:.18; box-shadow:0 0 0 6px white,0 0 0 7px var(--ink),0 0 0 13px white,0 0 0 14px var(--ink); }
+.thumbnail.classic::after { border-radius:7px; }
+.thumbnail.creative::after { width:85px; height:85px; }
+.thumbnail.minimal::after { border-radius:0; width:40px; height:40px; }
+.thumbnail.classic { border-top:3px double var(--ink); }
+.thumbnail.classic i { margin:2px auto 6px; width:60%; }
+.thumbnail.modern { padding-right:32%; }
+.thumbnail.modern::before { content:''; position:absolute; right:10px; top:38px; bottom:10px; width:22%; border-left:2px solid var(--ink); background:repeating-linear-gradient(#d4d9dd 0 2px,transparent 2px 5px); }
+.thumbnail.creative { border-top:25px solid var(--ink); border-right:22px solid #edf1f4; }
+.thumbnail.minimal { border-top:2px solid var(--ink); }
+.thumbnail.minimal b { width:28%; background:var(--ink); }.thumbnail.minimal i { height:5px; }
 .design-workspace { display:grid; grid-template-columns:280px minmax(0,1fr); border-top:1px solid var(--line); }
 .controls { border:0; margin:0; min-width:0; padding:20px; display:flex; flex-direction:column; gap:12px; }.controls h3,.controls h4,.controls p {margin:0;}.controls label {display:grid;gap:6px;font-size:.85rem;font-weight:600;}.controls select {width:100%;}.controls input[type="color"] {height:42px;padding:4px;cursor:pointer;}.controls .photo-toggle {display:flex;align-items:center;}.photo-toggle input {width:auto;}
 .section-order {list-style:none;padding:0;margin:0;}.section-order li {display:flex;gap:4px;align-items:center;margin:7px 0;}.section-order span {flex:1;text-transform:capitalize;}.section-order button {color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:5px;background:white;border:1px solid var(--line);border-radius:4px;cursor:pointer;}.section-order button:disabled {opacity:.35;cursor:default;}

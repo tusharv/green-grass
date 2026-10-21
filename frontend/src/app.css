@@ -606,34 +606,39 @@ textarea:focus-visible {
 .ivy {
   background: #fff;
   color: #14201b;
-  border: 1px solid #d7e3dc;
-  border-top: 4px solid var(--accent);
-  border-radius: var(--radius-surface);
+  border: 1px solid #d5e0da;
+  border-left: 10px solid var(--accent);
+  border-radius: 2px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgb(14 40 28 / 5%), 0 22px 48px rgb(14 40 28 / 8%);
+  box-shadow: 0 1px 0 #fff, 0 18px 40px rgb(20 40 32 / 8%);
 }
 
 .ivy h2 {
   font-family: var(--serif);
-  font-size: clamp(2.05rem, 3.2vw, 2.65rem);
+  font-size: clamp(1.85rem, 3vw, 2.35rem);
   font-weight: 600;
   margin: 0;
   color: #14201b;
   letter-spacing: -0.03em;
-  line-height: 1.1;
+  line-height: 1.08;
 }
 
 .ivy .for-role {
-  margin: 0.35rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 600;
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   line-height: 1.35;
   color: var(--accent-deep);
 }
 
 .ivy-top {
-  padding: 1.55rem 1.7rem 1.25rem;
-  border-bottom: 1px solid #e3ece7;
+  position: relative;
+  padding: 1.55rem 1.7rem 1.2rem;
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent) 22%, white) 0 86px, transparent 87px);
+  box-shadow: inset 0 -4px 0 var(--accent);
 }
 
 .ivy address { font-style: normal; margin: 0; }
@@ -671,9 +676,9 @@ textarea:focus-visible {
   flex: 0 0 auto;
   width: 1.7rem;
   height: 1.7rem;
-  border-radius: 8px;
-  background: #e7f3ec;
-  color: var(--accent-deep);
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
 }
 
 .ivy-grid.split {
@@ -686,8 +691,8 @@ textarea:focus-visible {
 
 .ivy-side {
   padding: 0.35rem 1.35rem 1.6rem;
-  background: #f3f8f5;
-  border-left: 1px solid #e3ece7;
+  background: color-mix(in srgb, var(--accent) 14%, white);
+  border-left: 0;
   min-width: 0;
 }
 
@@ -719,20 +724,21 @@ textarea:focus-visible {
 
 .ivy .role {
   position: relative;
-  margin-top: 1rem;
-  padding-left: 1.15rem;
+  margin-top: 0.95rem;
+  padding-left: 1.05rem;
 }
 
 .ivy .role::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 0.42rem;
+  top: 0.38rem;
   width: 0.55rem;
   height: 0.55rem;
-  border: 2px solid var(--accent);
+  border: 2px solid #fff;
   border-radius: 50%;
-  background: #fff;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
   box-sizing: border-box;
 }
 
@@ -740,10 +746,10 @@ textarea:focus-visible {
   content: "";
   position: absolute;
   left: 0.22rem;
-  top: 1.1rem;
+  top: 1.05rem;
   bottom: -1.15rem;
-  width: 1px;
-  background: #d5e3db;
+  width: 2px;
+  background: color-mix(in srgb, var(--accent) 55%, white);
 }
 
 .ivy .role-line {
@@ -759,9 +765,12 @@ textarea:focus-visible {
 
 .ivy .dates {
   flex: 0 0 auto;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #3e5149;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-deep);
+  background: color-mix(in srgb, var(--accent) 14%, white);
+  padding: 0.12rem 0.45rem;
+  border-radius: 4px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -786,32 +795,45 @@ textarea:focus-visible {
 
 .ivy p { margin: 0.15rem 0; }
 
-.ivy .skill-pills {
+.ivy .skills {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 0.1rem 0 0;
+  margin: 0.15rem 0 0;
   padding: 0;
   list-style: none;
 }
 
-.ivy .skill-pills li {
+.ivy .skills li {
+  display: inline-flex;
   margin: 0;
-  padding: 0.28rem 0.7rem;
-  border: 1px solid #c9ddd3;
+  padding: 0.32rem 0.7rem;
   border-radius: 999px;
   background: #fff;
   color: #163028;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, white);
 }
 
-.ivy .school { margin-top: 0.75rem; }
+.ivy .skills li::before { content: none; }
+
+.ivy .school { margin-top: 0.85rem; }
+
+.ivy .school-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+}
 
 .ivy .school-title { font-weight: 700; }
 
-.ivy .school-year { color: #3e5149; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ivy .school-name { margin: 0.12rem 0 0; color: #3e5149; }
+
+.ivy .school-year { color: #3e5149; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .roadmap {
   display: grid;

@@ -1,0 +1,134 @@
+/* Corner drawings sit behind the type. Icons label sections; they never replace the words. */
+.resume { background-color:white; background-image:var(--corner-top),var(--corner-bottom); background-position:right top,left bottom; background-size:340px 400px; background-repeat:no-repeat; }
+.professional-title { display:block; margin:2px 0 12px; font-weight:600; letter-spacing:.01em; color:var(--readable-accent); }
+.design-icon { color:var(--readable-accent); }
+h2 { display:flex; align-items:center; gap:8px; font-family:Arial,"Liberation Sans",sans-serif; color:var(--readable-accent); }
+h2 .design-icon { width:15px; height:15px; margin:0; padding:5px; border-radius:50%; background:var(--page-color); box-sizing:content-box; }
+.job-meta { color:var(--readable-accent); font-family:Arial,"Liberation Sans",sans-serif; font-weight:600; line-height:1.45; }
+.dates { color:#53616d; }
+.role li::marker { color:var(--readable-accent); }
+.company-badge { display:none; }
+.role-heading { display:block; }
+.classic .company-badge,
+.modern .company-badge,
+.creative .company-badge { display:inline-flex; }
+.classic .role-heading,
+.modern .role-heading,
+.creative .role-heading { display:flex; }
+.skills { line-height:1.8; }
+header { display:flow-root; }
+.school-line strong { font-size:11.5pt; }
+
+/* Classic: a colour spine, a ruled masthead, and section titles held between two strokes. */
+.classic.resume { border-left:8px solid var(--design-accent); }
+.classic .identity { flex-direction:column; align-items:center; }
+.classic .identity-copy { width:100%; text-align:center; border-top:4px double var(--design-accent); border-bottom:4px double var(--design-accent); padding:18px 12px 16px; }
+.classic header { border:0; padding-bottom:8px; }
+.classic .contact { justify-content:center; }
+.classic .portrait { margin:0 auto 14px; box-shadow:0 0 0 4px var(--page-color),0 0 0 6px var(--design-accent); }
+.classic h1 { font-weight:600; }
+.classic h2 { justify-content:center; letter-spacing:.18em; font-size:10pt; border:0; padding-bottom:0; }
+.classic h2::before, .classic h2::after { content:""; width:28px; height:2px; background:var(--design-accent); flex:0 0 auto; }
+.classic h3 { font-family:var(--heading-font); }
+.classic .professional-title { letter-spacing:.16em; text-transform:uppercase; font-size:10pt; font-weight:700; }
+.classic .skills { display:flex; flex-wrap:wrap; gap:6px 8px; }
+.classic .skills li { display:inline-block; margin:0; padding:3px 10px; border-radius:999px; background:var(--page-color); }
+.classic .skills li::after { content:none; }
+.classic .role { position:relative; padding-left:16px; margin-left:4px; border-left:2px solid var(--design-accent); }
+.classic .role::before { content:""; position:absolute; left:-6px; top:6px; width:10px; height:10px; border-radius:50%; background:var(--design-accent); }
+
+/* Modern: a filled colour rail for skills, the Enhancv double-column move. */
+.modern header { border:0; margin-bottom:18px; padding-bottom:0; }
+.modern .portrait { order:1; box-shadow:0 0 0 4px #fff,0 0 0 6px var(--modern-line); }
+.modern h1 { font-family:Arial,"Liberation Sans",sans-serif; font-weight:700; letter-spacing:-.045em; }
+.modern .identity { padding-bottom:16px; border-bottom:2px solid var(--modern-line); }
+.modern .columns aside { grid-column:1; }
+.modern .columns main { grid-column:2; }
+.modern h2 { color:#20252b; letter-spacing:.14em; border:0; }
+.modern h2::after { content:""; width:36px; height:3px; margin-left:4px; background:var(--modern-line); }
+.modern aside { padding:16px 14px 10px; border:0; background:var(--modern-wash); color:#20252b; }
+.modern aside h2,
+.modern aside strong,
+.modern aside p,
+.modern aside li,
+.modern aside .school-year { color:#20252b; }
+.modern aside h2 { border:0; }
+.modern aside h2 .design-icon { background:rgba(255,255,255,.72); }
+.modern aside .skills li { display:block; padding:7px 0; border-bottom:1px solid var(--modern-line); }
+.modern aside .skills li::before { content:""; display:inline-block; width:8px; height:8px; margin-right:8px; border-radius:2px; background:var(--design-accent); opacity:.72; vertical-align:middle; }
+.modern aside .skills li:not(:last-child)::after { content:none; }
+.modern aside .school + .school { border-top:1px solid var(--modern-line); }
+
+/* Creative: a deep colour field, then a tinted skills panel. */
+.creative header { border:0; border-radius:0; padding:36px 32px; background-image:var(--corner-top); background-position:right top; background-size:340px 380px; background-repeat:no-repeat; }
+.creative .portrait { order:1; border-color:transparent; box-shadow:0 0 0 4px #fff; }
+.creative .professional-title,
+.creative header .design-icon,
+.creative header .contact { color:inherit; }
+.creative .shared-context span { color:inherit; opacity:.8; }
+.creative h1 { font-family:Arial,"Liberation Sans",sans-serif; font-weight:700; letter-spacing:-.045em; }
+.creative .professional-title { letter-spacing:.12em; text-transform:uppercase; font-size:10pt; font-weight:700; }
+.creative h2 { letter-spacing:.14em; border:0; }
+.creative h2::after { content:""; width:42px; height:3px; margin-left:6px; background:var(--design-accent); }
+.creative aside { background:var(--page-color); padding:18px 16px 8px; border-top:8px solid var(--design-accent); }
+.creative .skills { display:flex; flex-wrap:wrap; gap:6px; }
+.creative .skills li { display:inline-block; margin:0; padding:4px 9px; border-radius:6px; background:#fff; border-bottom:0; }
+.creative .skills li:not(:last-child)::after { content:none; }
+
+/* Minimal: open type, with the accent carried by chips and a heavy section bar. */
+.minimal header { border:0; padding-top:0; }
+.minimal .identity-copy { border-top:6px solid var(--design-accent); padding-top:16px; }
+.minimal .portrait { order:1; }
+.minimal h1 { letter-spacing:-.05em; font-weight:600; }
+.minimal h2 { font-family:Arial,"Liberation Sans",sans-serif; font-weight:700; font-size:10pt; letter-spacing:.1em; text-transform:uppercase; border:0; border-left:6px solid var(--design-accent); padding:2px 0 2px 10px; }
+.minimal h2 .design-icon { background:transparent; padding:0; }
+.minimal .dates { background:var(--page-color); color:var(--readable-accent); padding:2px 8px; }
+.minimal .role + .role { border-top:1px solid #e2e7eb; padding-top:12px; }
+.minimal .professional-title { font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+.minimal .skills { display:flex; flex-wrap:wrap; gap:6px 8px; }
+.minimal .skills li { display:inline-block; margin:0; padding:3px 10px; background:var(--page-color); }
+.minimal .skills li::after { content:none; }
+
+@media screen and (max-width:850px) {
+  .resume { background-size:240px 285px; }
+  .modern .columns aside, .modern .columns main { grid-column:auto; }
+  .creative .columns aside { margin-top:8px; }
+  .modern aside { padding:16px; }
+}
+@media screen and (max-width:480px) {
+  .resume { background-size:180px 215px; }
+  .portrait { order:0; }
+  .classic .portrait { margin-bottom:12px; }
+  .classic h2::before, .classic h2::after { width:16px; }
+}
+@media print {
+  body { background:transparent; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .resume { page:cv; background:none; padding:0; max-width:none; box-shadow:none; }
+  header { break-inside:avoid; }
+  h1, .creative h1 { font-size:26pt; }
+  h2, h3, .role-heading, .role-line { break-after:avoid; }
+  .role-heading, .role-line, .school { break-inside:avoid; }
+  .classic .role-heading,
+  .modern .role-heading,
+  .creative .role-heading { display:block; }
+  .classic .company-badge,
+  .modern .company-badge,
+  .creative .company-badge { float:left; display:block; text-align:center; line-height:32px; }
+  .classic .role-body,
+  .modern .role-body,
+  .creative .role-body { margin-left:46px; }
+  .classic .role { margin-left:8px; }
+  p, li { orphans:2; widows:2; }
+  .columns { display:block; }
+  .columns aside { float:right; width:32%; }
+  .columns main { margin-left:0; margin-right:36%; }
+  .modern .columns aside { float:left; width:32%; background:var(--modern-wash); }
+  .modern .columns main { margin-right:0; margin-left:36%; }
+  .contact-item { display:inline; }
+  .modern aside { padding:10px; }
+  .creative aside { padding:12px; }
+  .creative header { padding:22px; }
+  .creative .portrait, .modern .portrait, .classic .portrait { box-shadow:none; }
+  .professional-title { font-size:10.5pt; }
+  .dates { font-size:10pt; }
+}

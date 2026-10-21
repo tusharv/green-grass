@@ -6,8 +6,10 @@ from pathlib import Path
 
 from app.schemas import CvDocument, ResumeDesign
 from app.services.design_icons import icon
+from app.services.design_decorations import corner_images
 
 SCREEN_CSS = Path(__file__).with_name("design_screen.css").read_text()
+TEMPLATE_CSS = Path(__file__).with_name("design_templates.css").read_text()
 
 
 def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *, shared_for: str = '') -> str:
@@ -22,16 +24,27 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
         design = design.model_copy(update={'accent': accent})
     photo_size = {'small': 72, 'medium': 112, 'large': 152}[design.photo_size]
     photo_radius = {'round': '50%', 'square': '0', 'rounded': '18%', 'portrait': '40% 40% 16% 16%'}[design.photo_shape]
+    corner_top, corner_bottom = corner_images(design.template, design.accent)
     e = escape
     contact = document.contact
     roles = []
     for index, role in enumerate(document.experience):
         dates = ' – '.join(filter(None, [role.start, role.end]))
         bullets = ''.join(f'<li>{e(b)}</li>' for b in role.bullets)
-        initials = ''.join(word[0] for word in role.employer.split()[:2]).upper() or '—'
+        words = [word for word in role.employer.split() if any(ch.isalpha() for ch in word)]
+        initials = ''.join(word[0] for word in words[:2]).upper() or '—'
         badge = f'<span class="company-badge" data-company-index="{index}" aria-hidden="true">{e(initials)}</span>'
-        roles.append(f'<div class="role"><div class="role-heading">{badge}<div><h3>{e(role.title)}</h3><p class="job-meta">{e(role.employer)} <span>{e(dates)}</span></p></div></div><ul>{bullets}</ul></div>')
-    schools = ''.join(f'<div class="school"><strong>{e(s.credential)}</strong><p>{e(s.school)} · {e(s.year)}</p></div>' for s in document.education)
+        when = f'<p class="dates">{e(dates)}</p>' if dates else ''
+        roles.append(
+            f'<div class="role"><div class="role-heading">{badge}<div class="role-body">'
+            f'<div class="role-line"><h3>{e(role.title)}</h3>{when}</div>'
+            f'<p class="job-meta">{e(role.employer)}</p></div></div><ul>{bullets}</ul></div>'
+        )
+    schools = ''.join(
+        f'<div class="school"><div class="school-line"><strong>{e(s.credential)}</strong>'
+        f'<span class="school-year">{e(s.year)}</span></div><p>{e(s.school)}</p></div>'
+        for s in document.education
+    )
     sections = {
         'summary': ('Profile', f'<p>{e(document.summary)}</p>' if document.summary else ''),
         'experience': ('Experience', ''.join(roles)),
@@ -58,6 +71,10 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     luminance = sum(v * weight for v, weight in zip(linear, [.2126, .7152, .0722]))
     heading_color = design.accent if 1.05 / (luminance + .05) >= 4.5 else '#20252b'
     banner_text = '#ffffff' if luminance <= .179 else '#111111'
+    aside_line = 'rgba(255,255,255,.45)' if banner_text == '#ffffff' else 'rgba(17,17,17,.28)'
+    accent_rgb = tuple(int(design.accent[i:i + 2], 16) for i in (1, 3, 5))
+    modern_wash = 'rgba(%d,%d,%d,.14)' % accent_rgb
+    modern_line = 'rgba(%d,%d,%d,.32)' % accent_rgb
     size = {'small':10,'medium':11,'large':12}[design.text_size]
     space = {'compact':10,'comfortable':17,'airy':24}[design.spacing]
     safe_photo = photo.startswith('data:image/jpeg;base64,') or bool(re.fullmatch(r'https://github\.com/[A-Za-z0-9-]{1,39}\.png\?size=640', photo))
@@ -89,6 +106,10 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
             compact = path[1]
         contact_parts.append(link(value, href, symbol, compact) if safe else e(value))
     contacts = ''.join(f'<span class="contact-item">{part}</span>' for part in contact_parts)
+    # PDF SVG rendering does not consistently inherit CSS currentColor.
+    content = content.replace('stroke="currentColor"', f'stroke="{heading_color}"')
+    contact_color = banner_text if design.template == 'creative' else heading_color
+    contacts = contacts.replace('stroke="currentColor"', f'stroke="{contact_color}"')
     screen_body = font
     screen_size = {'small': '15px', 'medium': '16px', 'large': '18px'}[design.text_size]
     screen_gap = {'compact': '16px', 'comfortable': '24px', 'airy': '32px'}[design.spacing]
@@ -97,11 +118,16 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     subtitle = f'<p class="professional-title">{e(headline)}</p>' if headline else ''
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(contact.name or 'CV')}</title>
 <style>
-:root {{ --screen-body:{screen_body}; --heading-font:{heading}; --page-color:{page_color}; --photo-size:{photo_size}px; --photo-radius:{photo_radius}; --screen-size:{screen_size}; --screen-gap:{screen_gap}; --design-accent:{design.accent}; }}
+:root {{ --screen-body:{screen_body}; --heading-font:{heading}; --page-color:{page_color}; --photo-size:{photo_size}px; --photo-radius:{photo_radius}; --screen-size:{screen_size}; --screen-gap:{screen_gap}; --design-accent:{design.accent}; --readable-accent:{heading_color}; --on-accent:{banner_text}; --aside-line:{aside_line}; --modern-wash:{modern_wash}; --modern-line:{modern_line}; --corner-top:{corner_top}; --corner-bottom:{corner_bottom}; }}
+.identity {{ display:flex; align-items:flex-start; gap:22px; }}
+.identity-copy {{ min-width:0; flex:1; }}
 .role-heading {{ display:flex; gap:12px; align-items:flex-start; break-inside:avoid; }}
-.role-heading > div {{ min-width:0; }}
-.company-badge {{ position:relative; display:inline-flex; align-items:center; justify-content:center; flex:0 0 36px; width:36px; height:36px; border:1px solid #dbe3e8; border-radius:7px; background:#f2f5f7; color:#47525c; font:600 12px/1 Arial,sans-serif; overflow:hidden; }}
-.company-badge img {{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:4px; background:white; }}
+.role-body {{ min-width:0; flex:1; }}
+.role-line {{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }}
+.role-line h3 {{ flex:1; min-width:0; }}
+.dates {{ margin:0; flex:0 0 auto; font:600 10pt/1.35 Arial,"Liberation Sans",sans-serif; color:#53616d; font-variant-numeric:tabular-nums; }}
+.company-badge {{ position:relative; display:inline-flex; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:34px; border:1px solid #d5dee6; border-radius:4px; background:#fff; color:#3d4b57; font:600 11px/1 Arial,sans-serif; letter-spacing:.02em; overflow:hidden; }}
+.company-badge img {{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:3px; background:white; }}
 .professional-title {{ display:none; }}
 .contact-short {{ display:none; }}
 .shared-context {{ display:none; }}
@@ -119,21 +145,23 @@ p {{ margin:4px 0 10px; }}
 .contact {{ font:10pt/1.6 Arial,sans-serif; color:#47525c; }}
 .section {{ margin-bottom:{space}px; }}
 ul {{ padding-left:18px; margin:6px 0 12px; }} li {{ margin-bottom:5px; }}
-.job-meta {{ font-size:10pt; color:#47525c; }} .job-meta span {{ display:block; }}
+.job-meta {{ font-size:10.5pt; color:{heading_color}; margin:3px 0 0; }}
+.school-line {{ display:flex; justify-content:space-between; gap:12px; align-items:baseline; }}
+.school-year {{ flex:0 0 auto; color:#53616d; font:600 10pt/1.4 Arial,"Liberation Sans",sans-serif; font-variant-numeric:tabular-nums; }}
+.school p {{ margin:2px 0 0; color:#53616d; }}
 .role {{ margin-bottom:{space}px; }} .school {{ margin-bottom:12px; }}
 .skills {{ list-style:none; padding:0; }} .skills li {{ display:inline; }} .skills li:not(:last-child)::after {{ content:' · '; }}
-.portrait {{ width:84px; height:84px; border-radius:50%; object-fit:cover; float:right; margin:0 0 12px 20px; }}
+.portrait {{ width:84px; height:84px; border-radius:50%; object-fit:cover; float:none; margin:0; flex:0 0 auto; }}
 .columns {{ display:flex; gap:30px; align-items:flex-start; }} aside {{ width:27%; flex-shrink:0; }} main {{ min-width:0; flex:1; }}
-.modern aside {{ padding-right:20px; border-right:2px solid {design.accent}; }}
 .creative header {{ background:{design.accent}; color:{banner_text}; padding:30px; border:0; }}
 .creative .contact {{ color:{banner_text}; }}
-a {{ color:inherit; text-decoration:underline; text-underline-offset:2px; }} .creative aside {{ background:#edf1f4; padding:18px; }}
+a {{ color:inherit; text-decoration:underline; text-underline-offset:2px; }}
 .creative h1 {{ font-size:36pt; }}
-.minimal h1 {{ font-size:27pt; }} .minimal h2 {{ border:0; letter-spacing:.02em; text-transform:none; }} .minimal header {{ border-bottom:1px solid #d9dfe2; }}
-@media screen and (max-width:600px) {{ .resume {{ padding:22px; }} .columns {{ display:block; }} aside {{ width:100%; }} .modern aside {{ border:0; padding:0; }} h1,.creative h1 {{ font-size:26pt; }} .creative header {{ padding:20px; }} }}
-@media print {{ .resume {{ padding:0; max-width:none; }} .columns {{ display:block; }} .columns aside {{ float:left; width:27%; }} .columns main {{ margin-left:32%; }} header {{ break-inside:avoid; }} h2,h3 {{ break-after:avoid; }} p,li {{ orphans:2; widows:2; }} body {{ print-color-adjust:exact; }} }}
+@media screen and (max-width:600px) {{ .resume {{ padding:22px; }} .columns {{ display:block; }} aside {{ width:100%; }} .identity {{ flex-direction:column; }} h1,.creative h1 {{ font-size:26pt; }} .creative header {{ padding:20px; }} .role-line {{ display:block; }} .dates {{ margin-top:3px; }} }}
 {SCREEN_CSS}
+{TEMPLATE_CSS}
+@page cv {{ size:A4; margin:16mm; background-image:{corner_top},{corner_bottom}; background-position:right top,left bottom; background-size:85mm 100mm; background-repeat:no-repeat; }}
 .portrait {{ width:var(--photo-size); height:var(--photo-size); border-radius:var(--photo-radius); }}
 @media screen and (max-width:480px) {{ .portrait {{ width:min(var(--photo-size),120px); height:min(var(--photo-size),120px); }} }}
 @media print {{ .portrait {{ width:{round(photo_size * .75)}px; height:{round(photo_size * .75)}px; }} }}
-</style></head><body><article class="resume {design.template}"><header>{image}{context}<h1>{e(contact.name or 'CV')}</h1>{subtitle}<p class="contact">{contacts}</p></header>{content}</article></body></html>'''
+</style></head><body class="{design.template}-document"><article class="resume {design.template}"><header><div class="identity">{image}<div class="identity-copy">{context}<h1>{e(contact.name or 'CV')}</h1>{subtitle}<p class="contact">{contacts}</p></div></div></header>{content}</article></body></html>'''

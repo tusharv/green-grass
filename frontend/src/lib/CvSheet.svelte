@@ -30,9 +30,24 @@
     }
     for (const link of person.links || []) {
       if (!link) continue;
-      items.push({ icon: 'link', label: linkText(link), href: linkHref(link) });
+      items.push({ icon: linkIcon(link), label: linkText(link), href: linkHref(link) });
     }
     return items;
+  }
+
+  function linkIcon(link) {
+    const host = linkHost(link);
+    if (host === 'github.com' || host.endsWith('.github.com')) return 'github';
+    if (host === 'linkedin.com' || host.endsWith('.linkedin.com')) return 'linkedin';
+    return 'link';
+  }
+
+  function linkHost(link) {
+    try {
+      return new URL(linkHref(link)).hostname.toLowerCase();
+    } catch {
+      return '';
+    }
   }
 
   function linkHref(link) {
@@ -55,7 +70,7 @@
         <ul class="contact-row">
           {#each contacts as item (item.icon + item.label)}
             <li>
-              <span class="mark"><Icon name={item.icon} size={15} /></span>
+              <span class="mark"><Icon name={item.icon} size={13} /></span>
               {#if item.href}
                 <a href={item.href}>{item.label}</a>
               {:else}
@@ -73,13 +88,13 @@
         <div class="ivy-main">
           {#if hasSummary}
             <section>
-              <h3><span class="mark"><Icon name="summary" size={15} /></span> Summary</h3>
+              <h3><span class="mark"><Icon name="summary" size={14} /></span> Profile</h3>
               <p class="summary">{document.summary}</p>
             </section>
           {/if}
           {#if hasExperience}
             <section class="experience">
-              <h3><span class="mark"><Icon name="role" size={15} /></span> Experience</h3>
+              <h3><span class="mark"><Icon name="role" size={14} /></span> Experience</h3>
               {#each document.experience as role, index (index)}
                 <div class="role">
                   <p class="role-line">
@@ -109,8 +124,8 @@
         <aside class="ivy-side">
           {#if hasSkills}
             <section>
-              <h3><span class="mark"><Icon name="skills" size={15} /></span> Skills</h3>
-              <ul class="skill-pills">
+              <h3><span class="mark"><Icon name="skills" size={14} /></span> Skills</h3>
+              <ul class="skills">
                 {#each document.skills as skill (skill)}
                   <li>{skill}</li>
                 {/each}
@@ -119,14 +134,18 @@
           {/if}
           {#if hasEducation}
             <section>
-              <h3><span class="mark"><Icon name="education" size={15} /></span> Education</h3>
+              <h3><span class="mark"><Icon name="education" size={14} /></span> Education</h3>
               {#each document.education as school, index (index)}
                 {@const title = school.credential || school.school}
                 {#if title || school.year}
                   <div class="school">
-                    {#if title}<p class="school-title">{title}</p>{/if}
-                    {#if school.credential && school.school}<p>{school.school}</p>{/if}
-                    {#if school.year}<p class="school-year">{school.year}</p>{/if}
+                    {#if title || school.year}
+                      <p class="school-line">
+                        {#if title}<span class="school-title">{title}</span>{/if}
+                        {#if school.year}<span class="school-year">{school.year}</span>{/if}
+                      </p>
+                    {/if}
+                    {#if school.credential && school.school}<p class="school-name">{school.school}</p>{/if}
                   </div>
                 {/if}
               {/each}

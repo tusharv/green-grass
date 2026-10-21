@@ -38,10 +38,10 @@
     flex: 0 0 32px;
     width: 32px;
     height: 32px;
-    border: 1px solid #d8ded9;
-    border-radius: 6px;
-    background: #f1f3f1;
-    color: #66736a;
+    border: 1px solid #d5dee6;
+    border-radius: 4px;
+    background: #fff;
+    color: #5c6b78;
   }
   img { position: absolute; inset: 1px; object-fit: contain; opacity: 0; }
   img.loaded { opacity: 1; }
