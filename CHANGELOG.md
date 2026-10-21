@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.7.0...v) (2026-10-21)
+
+
+### Features
+
+* design template update ([e110125](https://github.com/tusharv/green-grass/commit/e110125d567987806240c985ac8aab8596fc40f0))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.6.0...v) (2026-10-13)
 
 
