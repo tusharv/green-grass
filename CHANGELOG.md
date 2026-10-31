@@ -1,3 +1,12 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.8.0...v) (2026-10-31)
+
+
+### Bug Fixes
+
+* theme and graphic update ([5047280](https://github.com/tusharv/green-grass/commit/504728035a02e915f92ac841422ee9f60b0831d9))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.7.0...v) (2026-10-21)
 
 
