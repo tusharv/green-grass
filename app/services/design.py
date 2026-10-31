@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.schemas import CvDocument, ResumeDesign
 from app.services.design_icons import icon
-from app.services.design_decorations import corner_images
+from app.services.design_decorations import corner_images, theme_background
 
 SCREEN_CSS = Path(__file__).with_name("design_screen.css").read_text()
 TEMPLATE_CSS = Path(__file__).with_name("design_templates.css").read_text()
@@ -25,6 +25,16 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     photo_size = {'small': 72, 'medium': 112, 'large': 152}[design.photo_size]
     photo_radius = {'round': '50%', 'square': '0', 'rounded': '18%', 'portrait': '40% 40% 16% 16%'}[design.photo_shape]
     corner_top, corner_bottom = corner_images(design.template, design.accent)
+    background = theme_background(design.template, design.accent)
+    background = background or {
+        'images': f'{corner_top},{corner_bottom}', 'position': 'right top,left bottom',
+        'screen_size': '340px auto', 'print_size': '85mm auto', 'repeat': 'no-repeat',
+    }
+    # WeasyPrint positions page backgrounds within the page's content box.
+    # Offset into the margins so corner artwork stays at the physical edges.
+    print_position = background['position']
+    for edge in ('left', 'right', 'top', 'bottom'):
+        print_position = print_position.replace(edge, f'{edge} -16mm')
     e = escape
     contact = document.contact
     roles = []
@@ -70,9 +80,11 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in rgb]
     luminance = sum(v * weight for v, weight in zip(linear, [.2126, .7152, .0722]))
     heading_color = design.accent if 1.05 / (luminance + .05) >= 4.5 else '#20252b'
-    banner_text = '#ffffff' if luminance <= .179 else '#111111'
+    # Creative uses a light translucent wash; dark text stays readable over it.
+    banner_text = '#20252b'
     aside_line = 'rgba(255,255,255,.45)' if banner_text == '#ffffff' else 'rgba(17,17,17,.28)'
     accent_rgb = tuple(int(design.accent[i:i + 2], 16) for i in (1, 3, 5))
+    creative_wash = 'rgba(%d,%d,%d,.12)' % accent_rgb
     modern_wash = 'rgba(%d,%d,%d,.14)' % accent_rgb
     modern_line = 'rgba(%d,%d,%d,.32)' % accent_rgb
     size = {'small':10,'medium':11,'large':12}[design.text_size]
@@ -118,14 +130,14 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     subtitle = f'<p class="professional-title">{e(headline)}</p>' if headline else ''
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(contact.name or 'CV')}</title>
 <style>
-:root {{ --screen-body:{screen_body}; --heading-font:{heading}; --page-color:{page_color}; --photo-size:{photo_size}px; --photo-radius:{photo_radius}; --screen-size:{screen_size}; --screen-gap:{screen_gap}; --design-accent:{design.accent}; --readable-accent:{heading_color}; --on-accent:{banner_text}; --aside-line:{aside_line}; --modern-wash:{modern_wash}; --modern-line:{modern_line}; --corner-top:{corner_top}; --corner-bottom:{corner_bottom}; }}
+:root {{ --screen-body:{screen_body}; --heading-font:{heading}; --page-color:{page_color}; --photo-size:{photo_size}px; --photo-radius:{photo_radius}; --screen-size:{screen_size}; --screen-gap:{screen_gap}; --design-accent:{design.accent}; --readable-accent:{heading_color}; --on-accent:{banner_text}; --aside-line:{aside_line}; --modern-wash:{modern_wash}; --modern-line:{modern_line}; --theme-background:{background['images']}; --theme-background-size:{background['screen_size']}; --theme-background-position:{background['position']}; --theme-background-repeat:{background['repeat']}; --corner-top:{corner_top}; --corner-bottom:{corner_bottom}; }}
 .identity {{ display:flex; align-items:flex-start; gap:22px; }}
 .identity-copy {{ min-width:0; flex:1; }}
 .role-heading {{ display:flex; gap:12px; align-items:flex-start; break-inside:avoid; }}
 .role-body {{ min-width:0; flex:1; }}
-.role-line {{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }}
-.role-line h3 {{ flex:1; min-width:0; }}
-.dates {{ margin:0; flex:0 0 auto; font:600 10pt/1.35 Arial,"Liberation Sans",sans-serif; color:#53616d; font-variant-numeric:tabular-nums; }}
+.role-line {{ display:block; }}
+.role-line h3 {{ margin:0; }}
+.dates {{ margin:4px 0 0; font:600 10pt/1.35 Arial,"Liberation Sans",sans-serif; color:#53616d; font-variant-numeric:tabular-nums; }}
 .company-badge {{ position:relative; display:inline-flex; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:34px; border:1px solid #d5dee6; border-radius:4px; background:#fff; color:#3d4b57; font:600 11px/1 Arial,sans-serif; letter-spacing:.02em; overflow:hidden; }}
 .company-badge img {{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; padding:3px; background:white; }}
 .professional-title {{ display:none; }}
@@ -146,21 +158,21 @@ p {{ margin:4px 0 10px; }}
 .section {{ margin-bottom:{space}px; }}
 ul {{ padding-left:18px; margin:6px 0 12px; }} li {{ margin-bottom:5px; }}
 .job-meta {{ font-size:10.5pt; color:{heading_color}; margin:3px 0 0; }}
-.school-line {{ display:flex; justify-content:space-between; gap:12px; align-items:baseline; }}
-.school-year {{ flex:0 0 auto; color:#53616d; font:600 10pt/1.4 Arial,"Liberation Sans",sans-serif; font-variant-numeric:tabular-nums; }}
+.school-line {{ display:block; }}
+.school-year {{ display:block; margin-top:3px; color:#53616d; font:600 10pt/1.4 Arial,"Liberation Sans",sans-serif; font-variant-numeric:tabular-nums; }}
 .school p {{ margin:2px 0 0; color:#53616d; }}
 .role {{ margin-bottom:{space}px; }} .school {{ margin-bottom:12px; }}
-.skills {{ list-style:none; padding:0; }} .skills li {{ display:inline; }} .skills li:not(:last-child)::after {{ content:' · '; }}
+ul.skills {{ list-style:none; padding:0; }} ul.skills li {{ display:inline; }} ul.skills li:not(:last-child)::after {{ content:' · '; }}
 .portrait {{ width:84px; height:84px; border-radius:50%; object-fit:cover; float:none; margin:0; flex:0 0 auto; }}
 .columns {{ display:flex; gap:30px; align-items:flex-start; }} aside {{ width:27%; flex-shrink:0; }} main {{ min-width:0; flex:1; }}
-.creative header {{ background:{design.accent}; color:{banner_text}; padding:30px; border:0; }}
+.creative header {{ background:{creative_wash}; color:{banner_text}; padding:30px; border:0; }}
 .creative .contact {{ color:{banner_text}; }}
 a {{ color:inherit; text-decoration:underline; text-underline-offset:2px; }}
 .creative h1 {{ font-size:36pt; }}
 @media screen and (max-width:600px) {{ .resume {{ padding:22px; }} .columns {{ display:block; }} aside {{ width:100%; }} .identity {{ flex-direction:column; }} h1,.creative h1 {{ font-size:26pt; }} .creative header {{ padding:20px; }} .role-line {{ display:block; }} .dates {{ margin-top:3px; }} }}
 {SCREEN_CSS}
 {TEMPLATE_CSS}
-@page cv {{ size:A4; margin:16mm; background-image:{corner_top},{corner_bottom}; background-position:right top,left bottom; background-size:85mm 100mm; background-repeat:no-repeat; }}
+@page cv {{ size:A4; margin:16mm; background-origin:border-box; background-clip:border-box; background-image:{background['images']}; background-position:{print_position}; background-size:{background['print_size']}; background-repeat:{background['repeat']}; }}
 .portrait {{ width:var(--photo-size); height:var(--photo-size); border-radius:var(--photo-radius); }}
 @media screen and (max-width:480px) {{ .portrait {{ width:min(var(--photo-size),120px); height:min(var(--photo-size),120px); }} }}
 @media print {{ .portrait {{ width:{round(photo_size * .75)}px; height:{round(photo_size * .75)}px; }} }}

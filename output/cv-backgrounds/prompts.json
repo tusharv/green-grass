@@ -1,0 +1,17 @@
+{
+  "tool": "Built-in image generation",
+  "prompts": [
+    {
+      "style": "executive",
+      "prompt": "Use case: productivity-visual. Create ONE full-page CV background image, portrait A4 aspect ratio, high resolution. Executive editorial style: almost white ivory background, exceedingly fine charcoal and muted champagne double-rule accent only along the extreme left edge, tiny elegant corner geometry bottom right. Restrained traditional luxury stationery. Flat full-bleed digital artwork, no photographed paper, no shadows, no mockup. Keep central 85% of page completely blank near-white for black CV text. Decoration limited to outer 5% margins and small corner tips. Very low ink coverage. No text, letters, labels, icons, placeholder lines, logos, watermark or border cutting into content. Professional printable resume background asset."
+    },
+    {
+      "style": "modern",
+      "prompt": "Use case: productivity-visual. Create ONE full-page CV background image, portrait A4 aspect ratio, high resolution. Modern technical style: pure white background, faint icy blue translucent architectural geometric facets confined to top right and bottom left corners, one fine navy edge accent. Clean precise contemporary stationery. Flat full-bleed digital artwork, no photographed paper, no shadows, no mockup. Keep central 85% of page completely blank near-white for black CV text. Decoration limited to outer 5% margins and small corner tips. Very low ink coverage. No text, letters, labels, icons, placeholder lines, logos, watermark or border cutting into content. Professional printable resume background asset."
+    },
+    {
+      "style": "organic",
+      "prompt": "Use case: productivity-visual. Create ONE full-page CV background image, portrait A4 aspect ratio, high resolution. Creative organic style: warm white background, soft translucent sage green watercolor leaves and pale terracotta wash confined tightly to bottom right and top left outer corners. Sophisticated minimal botanical stationery, delicate and unobtrusive. Flat full-bleed digital artwork, no photographed paper, no shadows, no mockup. Keep central 85% of page completely blank near-white for black CV text. Decoration limited to outer 5% margins and small corner tips. Very low ink coverage. No text, letters, labels, icons, placeholder lines, logos, watermark or border cutting into content. Professional printable resume background asset."
+    }
+  ]
+}

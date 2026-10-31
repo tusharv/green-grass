@@ -74,7 +74,7 @@ def test_contact_actions_and_light_accent_stay_readable():
     assert 'href="mailto:ada@example.com"' in html
     assert 'href="https://example.com/portfolio"' in html
     assert 'href="https://user:password' not in html
-    assert 'background:#ffffff; color:#111111' in html
+    assert 'background:rgba(255,255,255,.12); color:#20252b' in html
     assert 'color:#20252b; font-size:11pt' in html
 
 
@@ -126,3 +126,33 @@ def test_extended_design_controls_render(font):
     assert '--photo-size:152px' in html
     assert '--photo-radius:18%' in html
     assert '<img class="portrait"' in html
+
+
+@pytest.mark.parametrize('template', ['classic', 'modern', 'creative'])
+def test_background_pieces_fit_browser_css_limit(template):
+    from app.services.design_decorations import theme_background
+    background = theme_background(template)
+    # Chromium discards oversized custom properties; leave ample headroom
+    # below its 1 MiB limit for the two independent image pieces.
+    assert len(background['images']) < 512_000
+    assert background['images'].count('data:image/png;base64,') == 2
+
+
+@pytest.mark.parametrize('template', ['classic', 'modern', 'creative'])
+@pytest.mark.parametrize('accent', ['#245747', '#203c64', '#603c65', '#8b4535', '#364454', '#15616a', '#e08020'])
+def test_background_artwork_uses_selected_accent(template, accent):
+    import base64
+    import re
+    from io import BytesIO
+    from PIL import Image
+    from app.services.design_decorations import theme_background
+
+    background = theme_background(template, accent)
+    expected = tuple(int(accent[i:i + 2], 16) for i in (1, 3, 5))
+    for encoded in re.findall(r'data:image/png;base64,([^\"]+)', background['images']):
+        with Image.open(BytesIO(base64.b64decode(encoded))) as piece:
+            assert piece.mode == 'RGBA'
+            assert piece.getchannel('A').getextrema()[0] == 0
+            assert 0 < piece.getchannel('A').getextrema()[1] <= 150
+            for channel, value in zip(piece.split()[:3], expected):
+                assert channel.getextrema() == (value, value)

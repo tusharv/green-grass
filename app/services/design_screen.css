@@ -19,11 +19,11 @@
   h2 { display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.14em; margin-bottom:14px; }
   h2 .design-icon { width:16px; height:16px; }
   h3 { font-size:18px; line-height:1.35; }
-  .role-line { align-items:baseline; gap:18px; }
   .dates { font-size:13px; font-weight:600; letter-spacing:.01em; }
   .section { margin-bottom:var(--screen-gap); }
   .summary p { margin:0; }
   .columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.55fr); gap:36px; align-items:start; }
+  .modern .columns { grid-template-columns:minmax(0,3fr) minmax(0,7fr); }
   .columns main { grid-column:1; grid-row:1; min-width:0; }
   .columns aside { grid-column:2; grid-row:1; width:auto; min-width:0; }
   .role { margin-bottom:var(--screen-gap); }
@@ -33,7 +33,6 @@
   .role li { margin-bottom:7px; padding-left:2px; }
   .school { margin:0 0 18px; }
   .school + .school { border-top:1px solid #e2e7eb; padding-top:16px; }
-  .school-line { align-items:baseline; }
   .school strong { font-size:15px; }
   .school-year { font-size:13px; }
   .school p { font:13px/1.6 Arial,sans-serif; color:#566575; margin:4px 0 0; }
@@ -56,7 +55,6 @@
   .contact { font-size:12px; gap:4px 12px; }
   .identity { flex-direction:column; }
   .portrait { order:0; }
-  .role-line { display:grid; gap:2px; }
   .dates { white-space:normal; }
   h3 { font-size:17px; }
 }

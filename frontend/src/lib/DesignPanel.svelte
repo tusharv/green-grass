@@ -3,10 +3,13 @@
   import { api, session } from './session.svelte.js';
   import DesignDocument from './DesignDocument.svelte';
   let { id, saved = null, onsave = () => {} } = $props();
+  import executiveBackground from '../../../app/services/assets/cv-backgrounds/executive.png';
+  import modernBackground from '../../../app/services/assets/cv-backgrounds/modern.png';
+  import botanicalBackground from '../../../app/services/assets/cv-backgrounds/botanical.png';
   const templates = [
-    {id:'classic',name:'Classic',note:'Ivy League · Centred masthead'},
-    {id:'modern',name:'Modern',note:'Double column · Skills rail'},
-    {id:'creative',name:'Creative',note:'Colour masthead · Photo band'},
+    {id:'classic',name:'Classic',note:'Executive · Fine detailing',background:executiveBackground},
+    {id:'modern',name:'Modern',note:'Geometric · Corner accents',background:modernBackground},
+    {id:'creative',name:'Creative',note:'Botanical · Soft watercolour',background:botanicalBackground},
     {id:'minimal',name:'Minimal',note:'Elegant · Single column'},
   ];
   const palettes = [
@@ -76,7 +79,7 @@
     <div class="template-list" aria-label="Choose a template">
       {#each templates as template}
         <button type="button" disabled={saving} class:selected={draft.template === template.id} aria-pressed={draft.template === template.id} onclick={() => draft = {...draft,template:template.id}}>
-          <span class="thumbnail {template.id}" style:--ink={draft.accent} aria-hidden="true"><i></i><b></b><em></em><em></em><em></em></span>
+          <span class="thumbnail {template.id}" style:--ink={draft.accent} style:background-image={template.background ? `url(${template.background})` : undefined} aria-hidden="true"><i></i><b></b><em></em><em></em><em></em></span>
           <strong>{template.name}</strong><small>{template.note}</small>
         </button>
       {/each}
@@ -121,13 +124,13 @@
 .template-list { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:0 20px 20px; }
 .template-list button { display:block; text-align:left; padding:12px; background:white; border:2px solid var(--line); border-radius:8px; cursor:pointer; color:var(--ink); }
 .template-list button.selected { border-color:var(--accent); background:#f2f7f4; }
-.thumbnail { display:block; width:80px; height:102px; padding:10px; background:white; border:1px solid #ddd; margin-bottom:12px; }
+.thumbnail { display:block; width:80px; height:102px; padding:10px; background-color:var(--ink); background-blend-mode:luminosity; background-size:contain; background-position:center; background-repeat:no-repeat; border:1px solid #ddd; margin-bottom:12px; }
 .thumbnail i { display:block; width:70%; height:8px; background:var(--ink); margin-bottom:8px; }
 .thumbnail b { display:block; height:2px; background:var(--ink); margin-bottom:10px; }
 .thumbnail em { display:block; height:12px; margin:5px 0; background:repeating-linear-gradient(#d4d9dd 0 2px,transparent 2px 5px); }
 .thumbnail { position:relative; overflow:hidden; }
 .thumbnail::after { content:''; position:absolute; width:68px; height:68px; right:-28px; top:-24px; border:1px solid var(--ink); border-radius:50%; opacity:.18; box-shadow:0 0 0 6px white,0 0 0 7px var(--ink),0 0 0 13px white,0 0 0 14px var(--ink); }
-.thumbnail.classic::after { border-radius:7px; }
+.thumbnail.classic::after, .thumbnail.modern::after, .thumbnail.creative::after { display:none; }
 .thumbnail.creative::after { width:85px; height:85px; }
 .thumbnail.minimal::after { border-radius:0; width:40px; height:40px; }
 .thumbnail.classic { border-top:3px double var(--ink); }
@@ -135,7 +138,7 @@
 .thumbnail.modern { padding-right:32%; }
 .thumbnail.modern::before { content:''; position:absolute; right:10px; top:38px; bottom:10px; width:22%; border-left:2px solid var(--ink); background:repeating-linear-gradient(#d4d9dd 0 2px,transparent 2px 5px); }
 .thumbnail.creative { border-top:25px solid var(--ink); border-right:22px solid #edf1f4; }
-.thumbnail.minimal { border-top:2px solid var(--ink); }
+.thumbnail.minimal { border-top:2px solid var(--ink); background-color:white; }
 .thumbnail.minimal b { width:28%; background:var(--ink); }.thumbnail.minimal i { height:5px; }
 .design-workspace { display:grid; grid-template-columns:280px minmax(0,1fr); border-top:1px solid var(--line); }
 .controls { border:0; margin:0; min-width:0; padding:20px; display:flex; flex-direction:column; gap:12px; }.controls h3,.controls h4,.controls p {margin:0;}.controls label {display:grid;gap:6px;font-size:.85rem;font-weight:600;}.controls select {width:100%;}.controls input[type="color"] {height:42px;padding:4px;cursor:pointer;}.controls .photo-toggle {display:flex;align-items:center;}.photo-toggle input {width:auto;}

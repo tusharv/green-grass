@@ -1,5 +1,11 @@
 """Small, self-contained vector ornaments shared by screen and print."""
 from urllib.parse import quote
+from base64 import b64encode
+from functools import lru_cache
+from pathlib import Path
+from io import BytesIO
+
+from PIL import Image, ImageOps
 
 
 def corner_images(template: str, accent: str = '#245747') -> tuple[str, str]:
@@ -26,3 +32,46 @@ def corner_images(template: str, accent: str = '#245747') -> tuple[str, str]:
         return 'url("data:image/svg+xml,' + quote(svg, safe='') + '")'
 
     return image(), image('translate(340 400) rotate(180)')
+
+
+@lru_cache(maxsize=64)
+def theme_background(template: str, accent: str = '#245747') -> dict[str, str] | None:
+    """Cache small raster pieces, keeping browser CSS values below size limits.
+
+    Crop without resizing: CSS sets width and leaves height automatic. The
+    classic spine tiles vertically instead of stretching. Pillow is already
+    used for profile photos; no external asset requests are required.
+    """
+    specs = {
+        'classic': ('executive.png',
+                    [(20, 0, 40, 80), (795, 1231, 260, 260)],
+                    'left top,right bottom', '12px auto,150px auto',
+                    '3mm auto,38mm auto', 'repeat-y,no-repeat'),
+        'modern': ('modern.png',
+                   [(674, 0, 380, 360), (0, 1112, 400, 380)],
+                   'right top,left bottom', '26% auto,26% auto',
+                   '55mm auto,55mm auto', 'no-repeat'),
+        'creative': ('botanical.png',
+                     [(0, 0, 380, 390), (695, 1051, 360, 440)],
+                     'left top,right bottom', '26% auto,26% auto',
+                     '55mm auto,55mm auto', 'no-repeat'),
+    }
+    if template not in specs:
+        return None
+    filename, windows, position, screen_size, print_size, repeat = specs[template]
+    images = []
+    with Image.open(Path(__file__).with_name('assets') / 'cv-backgrounds' / filename) as source:
+        for x, y, width, height in windows:
+            crop = source.crop((x, y, x + width, y + height))
+            # Turn white paper into transparency and preserve the drawing's
+            # shading as alpha. The selected accent supplies every visible hue.
+            opacity = ImageOps.invert(ImageOps.grayscale(crop)).point(
+                lambda value: min(150, max(0, value - 6)))
+            piece = Image.new('RGBA', crop.size, accent)
+            piece.putalpha(opacity)
+            output = BytesIO()
+            piece.save(output, format='PNG', optimize=True)
+            encoded = b64encode(output.getvalue()).decode('ascii')
+            images.append(f'url("data:image/png;base64,{encoded}")')
+    return {'images': ','.join(images), 'position': position,
+            'screen_size': screen_size, 'print_size': print_size, 'repeat': repeat}

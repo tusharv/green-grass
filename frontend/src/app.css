@@ -798,21 +798,23 @@ textarea:focus-visible {
 .ivy .skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 4px 6px;
   margin: 0.15rem 0 0;
   padding: 0;
   list-style: none;
 }
 
 .ivy .skills li {
-  display: inline-flex;
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   margin: 0;
-  padding: 0.32rem 0.7rem;
+  padding: 2px 8px;
   border-radius: 999px;
   background: #fff;
   color: #163028;
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.3;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, white);
 }
