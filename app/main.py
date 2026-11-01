@@ -1,3 +1,9 @@
+from threading import RLock
+from app.schemas import InsightEdit
+import hashlib
+import json
+from app.services.application_pitch import fingerprint as pitch_fingerprint
+from app.services.llm import write_application_insights
 from app.services.job_links import fetch_job_link, validate_job_url, JobLinkError
 import re
 import base64
@@ -356,6 +362,92 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         user = require_user(request, db)
         return _application_detail(owned_application(db, user, application_id))
 
+    @app.post("/api/applications/{application_id}/insights")
+    def application_insights(application_id: int, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        row = owned_application(db, require_user(request, db), application_id)
+        document = _employer_document(row)
+        board = {**row.skill_board_json, "suitable": row.suitable}
+        version = pitch_fingerprint(row.role_title, board, document, row.job_description)
+        existing = row.result_json.get("application_insights") or {}
+        if existing.get("fingerprint") == version:
+            return _application_detail(row)
+        try:
+            insights = write_application_insights(model_client(), row.role_title, row.job_description, board, document)
+        except ModelError as exc:
+            raise HTTPException(422, detail=str(exc)) from exc
+        db.refresh(row)
+        db.refresh(row.cv)
+        if version != pitch_fingerprint(row.role_title, {**row.skill_board_json, "suitable": row.suitable}, _employer_document(row), row.job_description):
+            raise HTTPException(409, "The CV or role changed while drafting. Refresh and try again.")
+        row.result_json = {**row.result_json, "application_insights": insights}
+        db.commit()
+        db.refresh(row)
+        return _application_detail(row)
+
+    insight_lock = RLock()
+
+    def insight_version(row):
+        return pitch_fingerprint(row.role_title, {**row.skill_board_json, "suitable": row.suitable}, _employer_document(row), row.job_description)
+
+    def generate_section(application_id, section, request, db):
+        require_csrf(request)
+        row = owned_application(db, require_user(request, db), application_id)
+        version = insight_version(row)
+        before = (row.result_json.get("application_insights") or {}).get(section)
+        try:
+            generated = write_application_insights(model_client(), row.role_title, row.job_description,
+                {**row.skill_board_json, "suitable": row.suitable}, _employer_document(row), section=section)
+        except ModelError as exc:
+            raise HTTPException(422, detail=str(exc)) from exc
+        with insight_lock:
+            db.refresh(row)
+            db.refresh(row.cv)
+            current = row.result_json.get("application_insights") or {}
+            if version != insight_version(row) or current.get(section) != before:
+                raise HTTPException(409, "This draft or its source changed while generating. Refresh before trying again.")
+            if current.get("fingerprint") != version:
+                current = {}
+            updated = {**current, "fingerprint": version, "version": generated['version'], section: generated[section]}
+            row.result_json = {**row.result_json, "application_insights": updated}
+            db.commit()
+            db.refresh(row)
+            return _application_detail(row)
+
+    @app.post("/api/applications/{application_id}/honest-review")
+    def generate_review(application_id: int, request: Request, db: Session = Depends(get_db)):
+        return generate_section(application_id, "honest_review", request, db)
+
+    @app.post("/api/applications/{application_id}/cover-letter")
+    def generate_letter(application_id: int, request: Request, db: Session = Depends(get_db)):
+        return generate_section(application_id, "cover_letter", request, db)
+
+    def edit_section(application_id, section, body, request, db):
+        require_csrf(request)
+        row = owned_application(db, require_user(request, db), application_id)
+        with insight_lock:
+            db.refresh(row)
+            db.refresh(row.cv)
+            current = _application_detail(row).get(section)
+            if not current or current['revision'] != body.expected_revision:
+                raise HTTPException(409, "This draft or its source changed. Refresh before saving your edits.")
+            if not body.text.strip():
+                raise HTTPException(422, "Enter some text before saving.")
+            payload = row.result_json['application_insights']
+            updated = {**payload[section], "text": body.text.strip(), "edited_by_user": True}
+            row.result_json = {**row.result_json, "application_insights": {**payload, section: updated}}
+            db.commit()
+            db.refresh(row)
+            return _application_detail(row)
+
+    @app.patch("/api/applications/{application_id}/honest-review")
+    def edit_review(application_id: int, body: InsightEdit, request: Request, db: Session = Depends(get_db)):
+        return edit_section(application_id, "honest_review", body, request, db)
+
+    @app.patch("/api/applications/{application_id}/cover-letter")
+    def edit_letter(application_id: int, body: InsightEdit, request: Request, db: Session = Depends(get_db)):
+        return edit_section(application_id, "cover_letter", body, request, db)
+
     @app.post("/api/applications/{application_id}/design")
     def save_design(application_id: int, body: ResumeDesign, request: Request, db: Session = Depends(get_db)):
         require_csrf(request)
@@ -672,13 +764,24 @@ def _version_summary(row: Application) -> dict:
 
 
 def _application_detail(row: Application) -> dict:
+    insights = row.result_json.get("application_insights") or {}
+    if insights.get("fingerprint") != pitch_fingerprint(row.role_title, {**row.skill_board_json, "suitable": row.suitable}, _employer_document(row), row.job_description):
+        insights = {}
+    def artifact(key):
+        value = insights.get(key)
+        if not value:
+            return None
+        revision = hashlib.sha256(json.dumps([insights['fingerprint'], value], sort_keys=True).encode()).hexdigest()
+        return {**value, "revision": revision}
     return {
+        "honest_review": artifact("honest_review"),
+        "cover_letter": artifact("cover_letter"),
         **_version_summary(row),
         "candidate_name": _candidate_name(row),
         "design": row.result_json.get("design"),
         "design_html": designed_html(CvDocument.model_validate(_employer_document(row)), ResumeDesign.model_validate(row.result_json["design"]), _design_photo(row.cv, web=True)) if row.result_json.get("design") else None,
         "skill_board": row.skill_board_json,
-        "result": row.result_json,
+        "result": {key: value for key, value in row.result_json.items() if key not in ("cover_letter", "application_insights")},
     }
 
 

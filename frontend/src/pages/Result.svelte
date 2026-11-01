@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import DesignDocument from '../lib/DesignDocument.svelte';
+  import ApplicationPitch from '../lib/ApplicationPitch.svelte';
   import CvChat from '../lib/CvChat.svelte';
   import CvSheet from '../lib/CvSheet.svelte';
   import DeleteControl from '../lib/DeleteControl.svelte';
@@ -116,13 +117,15 @@
 <section class="stack">
   {#if error}<p class="alert" role="alert">{error}</p>{/if}
   {#if row}
-    <header class="page-head">
-      <div>
+    <header class="page-head role-header">
+      <div class="role-identity">
         <p class="eyebrow">Role check</p>
         <h1>{row.candidate_name}</h1>
-        <p class="lede">{row.role_title}</p>
-        {#if row.job_url}<a class="job-source" href={row.job_url} target="_blank" rel="noopener noreferrer"><Icon name="link" size={15}/> Original job posting <Icon name="arrow" size={14}/></a>{/if}
-        <p class="meta"><a href="/cvs/{row.cv_id}">Saved CV</a></p>
+        <p class="role-title">{row.role_title}</p>
+        <nav class="role-sources" aria-label="Role check sources">
+          <a href="/cvs/{row.cv_id}"><Icon name="cv" size={16}/><span>Saved CV</span></a>
+          {#if row.job_url}<a href={row.job_url} target="_blank" rel="noopener noreferrer"><Icon name="link" size={16}/><span>Original job posting</span><Icon name="arrow" size={13}/></a>{/if}
+        </nav>
       </div>
       <div class="page-actions">
         <a class="button secondary" href={`/applications/${id}/edit`}>Design and edit CV</a>
@@ -167,6 +170,7 @@
       />
       <div class="review-content">
         <RoleReview required={board.required || []} {preferred} {suitable} {plans} {canLearn} />
+        <ApplicationPitch {row} onupdate={updated => row=updated}/>
         {#key assessmentRevision}<CvChat {id} shared={Boolean(shareUrl)} blocked={learningPending || sharePending} onapply={(updated) => { assessmentRevision += 1; row = updated; learningError = ''; }} />{/key}
         {#if plans.length || canLearn}
           <GapRoadmap {plans} summary={report?.summary || ''} pending={learningPending} error={learningError} incomplete={canLearn && !hasLearningDetails(report)} onretry={generateLearningPlan} />
@@ -184,3 +188,16 @@
     <p class="hint" role="status">Loading your role review…</p>
   {/if}
 </section>
+
+<style>
+  .role-header {align-items:center;gap:24px;padding:6px 0 24px;border-bottom:1px solid var(--line);margin-bottom:0;}
+  .role-identity {min-width:0;flex:1;}
+  .role-identity .eyebrow {font-size:11px;letter-spacing:.12em;margin:0 0 10px;color:var(--muted);}
+  .role-identity h1 {font-size:clamp(28px,3vw,38px);line-height:1.15;letter-spacing:-.025em;overflow-wrap:anywhere;}
+  .role-title {margin:7px 0 0;font-size:19px;line-height:1.35;color:var(--muted);overflow-wrap:anywhere;}
+  .role-sources {display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;}
+  .role-sources a {display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--sheet);color:var(--muted);font-size:12px;font-weight:600;line-height:1.3;text-decoration:none;}
+  .role-sources a:hover {border-color:var(--accent);color:var(--accent);background:#edf5ef;}
+  .role-sources a:focus-visible {outline:2px solid var(--focus);outline-offset:3px;}
+  @media(max-width:700px) {.role-header {gap:20px;padding-bottom:20px;}.role-identity h1 {font-size:29px;}.role-title {font-size:17px;}.role-sources {margin-top:13px;}.role-sources a {min-height:40px;}}
+</style>

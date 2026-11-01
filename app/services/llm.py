@@ -207,3 +207,51 @@ def write_gap(
                 + "\nUse only the missing skills, and do not tell them to add those skills to a CV."
             )
     raise ModelError(f"The upskilling plan could not be used. Nothing was saved. {last_error}")
+
+
+def write_application_insights(client, role_title, job_description, board, document, section=None):
+    from app.schemas import ApplicationInsightsDraft, InsightsVerification, ReviewOnlyDraft, LetterOnlyDraft
+    from app.services.application_pitch import evidence_catalog, fingerprint, INSIGHTS_VERSION
+    from app.services.facts import ground_application_insights
+    from app.services.prompts import APPLICATION_INSIGHTS, VERIFY_APPLICATION_INSIGHTS
+    evidence = evidence_catalog(document)
+    if board.get('years_shown') is not None:
+        evidence['years_shown'] = {'kind': 'experience_total', 'text': f"{board['years_shown']:g} years of experience shown in the saved assessment"}
+    name = document.get('contact', {}).get('name', '')
+    # Only the sign-off name leaves the server; email, phone and address are unnecessary.
+    context = '\n<resume>\n' + json.dumps({'name': name, 'evidence': evidence}) + '\n</resume>'
+    context += '\n<job>\n' + json.dumps({'role_title': role_title, 'description': job_description, 'assessment': board}) + '\n</job>'
+    scope = ''
+    schema = ApplicationInsightsDraft
+    if section == 'cover_letter':
+        scope = '\nGenerate ONLY the cover letter. Return only the letter array; omit verdict, risks and next_round.'
+        schema = LetterOnlyDraft
+    elif section == 'honest_review':
+        scope = '\nGenerate ONLY the honest review. Return verdict, risks and next_round; omit letter.'
+        schema = ReviewOnlyDraft
+    note = ''
+    last_failure = ''
+    for _ in range(2):
+        partial = complete_model(client, APPLICATION_INSIGHTS + scope, context + note, schema)
+        draft = ApplicationInsightsDraft.model_construct(letter=getattr(partial, 'letter', []), verdict=getattr(partial, 'verdict', ''), risks=getattr(partial, 'risks', []), next_round=getattr(partial, 'next_round', ''))
+        try:
+            draft = ground_application_insights(draft, evidence, role_title, name, board)
+            verification = complete_model(client, VERIFY_APPLICATION_INSIGHTS,
+                                          context + scope + '\nValidate only the requested section; set flags for absent sections to true.\n<draft>\n' + draft.model_dump_json() + '\n</draft>', InsightsVerification)
+            if (not verification.supported or (section != 'honest_review' and not verification.positive_letter)
+                    or (section != 'cover_letter' and not verification.honest_review)):
+                raise FactError('; '.join(verification.reasons) or 'Draft did not pass the evidence and tone review.')
+            used = list(dict.fromkeys(key for paragraph in draft.letter for key in paragraph.evidence_ids))
+            sources = [{'id': key, **evidence[key]} for key in used]
+            return {
+                'version': INSIGHTS_VERSION,
+                'fingerprint': fingerprint(role_title, board, document, job_description),
+                'cover_letter': {'text': '\n\n'.join(p.text for p in draft.letter), 'sources': sources,
+                                 'skills': [s['text'] for s in sources if s['kind'] == 'skill']},
+                'honest_review': {'verdict': draft.verdict, 'risks': draft.risks, 'next_round': draft.next_round,
+                                  'strengths': [m for m in board.get('required', []) if m.get('present')]},
+            }
+        except FactError as exc:
+            last_failure = str(exc)
+            note = '\n<draft>\n' + draft.model_dump_json() + '\n</draft>\nRevise this draft to resolve these validation failures: ' + last_failure
+    raise ModelError('The draft could not be verified against your CV. Nothing was saved. ' + last_failure + ' Please try again.')

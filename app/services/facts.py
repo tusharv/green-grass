@@ -204,3 +204,38 @@ def ground_gap(major: list[str], minor: list[str], report: GapReport) -> GapRepo
     if claims_skill_on_cv(summary):
         raise FactError("Advice tells them to claim a skill on the CV")
     return GapReport(summary=summary, gaps=cleaned)
+
+
+def ground_application_insights(draft, evidence, role_title, name, board=None):
+    """Reject nonexistent citations and new numerals before semantic verification."""
+    cleaned = []
+    for paragraph in draft.letter:
+        def citation(match):
+            keys = [key.strip() for key in match.group(1).split(',')]
+            # Only actual citations declared by this paragraph may be removed.
+            # Unknown bracketed text, including metrics, remains subject to checks.
+            if keys and all(key in evidence and key in paragraph.evidence_ids for key in keys):
+                return ''
+            return match.group(0)
+        text = re.sub(r'\[([^\[\]\n]+)\]', citation, paragraph.text)
+        text = re.sub(r'[ \t]+([.,;:!?])', r'\1', text)
+        text = re.sub(r'[ \t]{2,}', ' ', text).strip()
+        cleaned.append(paragraph.model_copy(update={'text': text}))
+    draft = draft.model_copy(update={'letter': cleaned})
+    for paragraph in draft.letter:
+        if any(key not in evidence for key in paragraph.evidence_ids):
+            raise FactError('A paragraph cites evidence that does not exist.')
+        cited = '\n'.join(str(evidence[key]) for key in paragraph.evidence_ids)
+        if numbers_in(paragraph.text) - numbers_in(cited + '\n' + role_title + '\n' + name):
+            raise FactError('A paragraph contains numbers absent from its cited evidence.')
+    if board is not None:
+        letter = canon_phrase(' '.join(paragraph.text for paragraph in draft.letter))
+        for mark in (board.get('required') or []) + (board.get('preferred') or []):
+            phrase = canon_phrase(mark.get('name', ''))
+            if not mark.get('present') and phrase and f' {phrase} ' in f' {letter} ':
+                raise FactError('The positive letter must not claim or discuss an unverified requirement.')
+        review = draft.verdict + ' ' + ' '.join(draft.risks) + ' ' + draft.next_round
+        allowed = str(board) + role_title + str(evidence)
+        if numbers_in(review) - numbers_in(allowed):
+            raise FactError('The review introduces numbers absent from the assessment and CV.')
+    return draft

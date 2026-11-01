@@ -152,3 +152,37 @@ class ResumeDesign(BaseModel):
     def safe_logos(cls, value):
         from app.services.editor_images import validate_logos
         return validate_logos(value)
+
+
+class CitedParagraph(BaseModel):
+    text: str = Field(min_length=1, max_length=2500)
+    evidence_ids: list[str] = Field(default_factory=list, max_length=30)
+
+
+class ApplicationInsightsDraft(BaseModel):
+    letter: list[CitedParagraph] = Field(min_length=3, max_length=12)
+    verdict: str = Field(min_length=1, max_length=1800)
+    risks: list[str] = Field(default_factory=list, max_length=12)
+    next_round: str = Field(min_length=1, max_length=1200)
+
+
+class InsightsVerification(BaseModel):
+    supported: bool
+    positive_letter: bool
+    honest_review: bool
+    reasons: list[str] = Field(default_factory=list, max_length=15)
+
+
+class InsightEdit(BaseModel):
+    text: str = Field(min_length=1, max_length=16000)
+    expected_revision: str = Field(min_length=1, max_length=64)
+
+
+class ReviewOnlyDraft(BaseModel):
+    verdict: str = Field(min_length=1, max_length=1800)
+    risks: list[str] = Field(default_factory=list, max_length=12)
+    next_round: str = Field(min_length=1, max_length=1200)
+
+
+class LetterOnlyDraft(BaseModel):
+    letter: list[CitedParagraph] = Field(min_length=3, max_length=12)

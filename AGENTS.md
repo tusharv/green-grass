@@ -12,7 +12,7 @@ The person is applying for work. They already have a CV. They want to know wheth
 4. If the profile clears the bar, the model rewrites wording only. The person sees the CV and can download a PDF.
 5. If it does not clear the bar, the person sees which required skills are missing and how to practice them. There is no rewritten CV and no PDF.
 
-Say "Ready to send" when `suitable` is true and "Gaps to close" or "Not ready" when it is false. Do not add a third outcome, a cover letter, a match-percentage pitch, or advice to list a skill they have not done.
+Say "Ready to send" when `suitable` is true and "Gaps to close" or "Not ready" when it is false. Do not add a third outcome, a match-percentage pitch, or advice to list a skill they have not done.
 
 ## Fit, in code
 
@@ -133,3 +133,19 @@ Add or update a test when you change fit math, fact checks, upload limits, auth,
 - Don't add Next.js, a second backend, or a separate frontend host. FastAPI serves `frontend/dist`.
 - Don't edit `frontend/dist`. Rebuild it.
 - Don't add Alembic, new product surfaces, or new dependencies unless the task asks for them.
+
+## Ollama-generated personalized content
+
+Use Ollama for all personalized narrative content: honest reviews, cover letters, CV rewrites, learning plans and other candidate-specific advice or pitches. Do not substitute hard-coded paragraphs, canned assessments, preset advice, or string-assembled narrative templates for model output. Prompts may define tone, structure and constraints, but the final personalized prose must come from Ollama.
+
+Ground generation in the saved CV, job description and code-owned assessment. Validate model output before saving it. If Ollama is unavailable or validation fails, show a clear error with a retry option; never silently fall back to fixed prose or label a template as AI-generated. Cached output is allowed only when it was model-generated, validated, and still matches its source inputs. Keep scripted model responses in tests only.
+
+This rule concerns generated content, not product mechanics: UI labels, help text, schemas, authentication, ownership, limits, deterministic fit scoring, evidence checks and PDF eligibility stay in code. Preserve the explicitly required fixed safety outcomes (such as a posting with no required skills); Ollama must never decide suitability or invent missing experience.
+
+## Private review and cover letter
+
+The role page includes an Ollama-written candid review and positive cover letter (explicitly requested product additions). `POST /api/applications/{id}/insights` (also available through `/cover-letter`) requires ownership and CSRF. Both drafts use the saved CV, job description and code-owned assessment. A separate Ollama verification checks support and tone; code rejects nonexistent evidence IDs and new numerals. Failed drafts are never saved and no fixed prose fallback is used. Source fingerprints, including job description, invalidate old drafts and reject changes made during generation. Both artifacts are private and excluded from public profiles. They never change suitability or PDF eligibility. Do not claim to predict an employer’s next-round decision.
+
+### Independent insight drafts
+
+Honest Review and Cover Letter generate automatically and independently on first opening a role page. Each has separate POST generation and PATCH manual-save endpoints (`/honest-review`, `/cover-letter`), private text, busy/error state, and source-aware revision. Regeneration writes only the selected section and must preserve the other section, including user edits. Failed generation preserves the prior draft. Manual edits require a matching revision, are explicitly labeled user-edited, do not retain AI-verification claims, and never change source CV or fit. Subsequent visits reuse saved drafts. Warn before replacing saved text and before leaving unsaved edits.
