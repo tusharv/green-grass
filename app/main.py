@@ -1,3 +1,4 @@
+from app.services.job_links import fetch_job_link, validate_job_url, JobLinkError
 import re
 import base64
 import secrets
@@ -55,6 +56,11 @@ class ApplyBody(BaseModel):
     cv_id: int
     role_title: str = Field(min_length=1, max_length=200)
     job_description: str = Field(min_length=1)
+    job_url: str = Field(default="", max_length=2048)
+
+
+class JobLinkBody(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
 
 
 def create_app(settings: Settings | None = None, model=None) -> FastAPI:
@@ -292,10 +298,23 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         )
         return [_application_summary(row) for row in rows]
 
+    @app.post("/api/job-description")
+    def import_job_description(body: JobLinkBody, request: Request, db: Session = Depends(get_db)):
+        require_csrf(request)
+        require_user(request, db)
+        try:
+            return fetch_job_link(body.url)
+        except JobLinkError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     @app.post("/api/applications", status_code=201)
     def create_application(body: ApplyBody, request: Request, db: Session = Depends(get_db)):
         require_csrf(request)
         user = require_user(request, db)
+        try:
+            job_url = validate_job_url(body.job_url) if body.job_url.strip() else None
+        except JobLinkError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         role = body.role_title.strip()
         description = body.job_description.strip()
         if not role:
@@ -321,6 +340,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             cv_id=cv.id,
             role_title=role,
             job_description=description,
+            job_url=job_url,
             fit_score=fit.score,
             suitable=fit.suitable,
             skill_board_json=fit.model_dump(),
@@ -637,6 +657,7 @@ def _application_summary(row: Application) -> dict:
         "id": row.id,
         "cv_id": row.cv_id,
         "role_title": row.role_title,
+        "job_url": row.job_url,
         "fit_score": row.fit_score,
         "suitable": row.suitable,
         "created_at": row.created_at.isoformat(),

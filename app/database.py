@@ -36,3 +36,10 @@ def ensure_schema(engine) -> None:
             conn.execute(
                 text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false")
             )
+
+        if dialect == "sqlite":
+            columns = {row[1] for row in conn.execute(text("PRAGMA table_info(applications)")).fetchall()}
+            if "job_url" not in columns:
+                conn.execute(text("ALTER TABLE applications ADD COLUMN job_url TEXT"))
+        elif dialect == "postgresql":
+            conn.execute(text("ALTER TABLE applications ADD COLUMN IF NOT EXISTS job_url TEXT"))

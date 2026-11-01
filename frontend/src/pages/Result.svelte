@@ -121,6 +121,7 @@
         <p class="eyebrow">Role check</p>
         <h1>{row.candidate_name}</h1>
         <p class="lede">{row.role_title}</p>
+        {#if row.job_url}<a class="job-source" href={row.job_url} target="_blank" rel="noopener noreferrer"><Icon name="link" size={15}/> Original job posting <Icon name="arrow" size={14}/></a>{/if}
         <p class="meta"><a href="/cvs/{row.cv_id}">Saved CV</a></p>
       </div>
       <div class="page-actions">

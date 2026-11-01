@@ -70,6 +70,7 @@ class Application(Base):
     cv_id: Mapped[int] = mapped_column(ForeignKey("cvs.id"), index=True)
     role_title: Mapped[str] = mapped_column(String(200))
     job_description: Mapped[str] = mapped_column(Text)
+    job_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     fit_score: Mapped[int] = mapped_column(Integer)
     suitable: Mapped[bool] = mapped_column(Boolean)
     skill_board_json: Mapped[dict] = mapped_column(JSON)
