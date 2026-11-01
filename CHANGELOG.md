@@ -1,3 +1,13 @@
+# [](https://github.com/tusharv/green-grass/compare/v0.8.2...v) (2026-11-01)
+
+
+### Features
+
+* auto fetch role BETA ([7955cdd](https://github.com/tusharv/green-grass/commit/7955cdd510bb89c1c205e1cbb9859e69f0fc4211))
+* edit flow ([5717012](https://github.com/tusharv/green-grass/commit/5717012dfba93e86b2a88b384084efad7a627ea7))
+
+
+
 # [](https://github.com/tusharv/green-grass/compare/v0.8.1...v) (2026-11-01)
 
 
