@@ -40,36 +40,45 @@ def designed_html(document: CvDocument, design: ResumeDesign, photo: str = '', *
     roles = []
     for index, role in enumerate(document.experience):
         dates = ' – '.join(filter(None, [role.start, role.end]))
-        bullets = ''.join(f'<li>{e(b)}</li>' for b in role.bullets)
+        bullets = ''.join(f'<li data-edit-path="experience.{index}.bullets.{i}">{e(b)}</li>' for i, b in enumerate(role.bullets))
         words = [word for word in role.employer.split() if any(ch.isalpha() for ch in word)]
         initials = ''.join(word[0] for word in words[:2]).upper() or '—'
-        badge = f'<span class="company-badge" data-company-index="{index}" aria-hidden="true">{e(initials)}</span>'
+        key = ' '.join(role.employer.lower().split())
+        custom = key in design.company_logos
+        logo = design.company_logos.get(key, '')
+        logo_html = f'<img src="{e(logo, quote=True)}" alt="">' if logo else ''
+        badge = f'<span class="company-badge" data-company-index="{index}" data-company-name="{e(role.employer, quote=True)}" data-logo-custom="{str(custom).lower()}" aria-hidden="true">{e(initials)}{logo_html}</span>'
         when = f'<p class="dates">{e(dates)}</p>' if dates else ''
         roles.append(
             f'<div class="role"><div class="role-heading">{badge}<div class="role-body">'
-            f'<div class="role-line"><h3>{e(role.title)}</h3>{when}</div>'
-            f'<p class="job-meta">{e(role.employer)}</p></div></div><ul>{bullets}</ul></div>'
+            f'<div class="role-line"><h3 data-edit-path="experience.{index}.title">{e(role.title)}</h3>{when}</div>'
+            f'<p class="job-meta" data-edit-path="experience.{index}.employer">{e(role.employer)}</p></div></div><ul>{bullets}</ul></div>'
         )
     schools = ''.join(
-        f'<div class="school"><div class="school-line"><strong>{e(s.credential)}</strong>'
-        f'<span class="school-year">{e(s.year)}</span></div><p>{e(s.school)}</p></div>'
-        for s in document.education
+        f'<div class="school"><div class="school-line"><strong data-edit-path="education.{i}.credential">{e(s.credential)}</strong>'
+        f'<span class="school-year" data-edit-path="education.{i}.year">{e(s.year)}</span></div><p data-edit-path="education.{i}.school">{e(s.school)}</p></div>'
+        for i, s in enumerate(document.education)
     )
     sections = {
-        'summary': ('Profile', f'<p>{e(document.summary)}</p>' if document.summary else ''),
+        'summary': ('Profile', f'<p data-edit-path="summary">{e(document.summary)}</p>' if document.summary else ''),
         'experience': ('Experience', ''.join(roles)),
-        'skills': ('Skills', '<ul class="skills">'+''.join(f'<li>{e(s)}</li>' for s in document.skills)+'</ul>' if document.skills else ''),
+        'skills': ('Skills', '<ul class="skills">'+''.join(f'<li data-edit-path="skills.{i}">{e(s)}</li>' for i, s in enumerate(document.skills))+'</ul>' if document.skills else ''),
         'education': ('Education', schools),
     }
+    for i, section in enumerate(document.custom_sections):
+        items = ''.join(f'<li data-edit-path="custom_sections.{i}.items.{j}">{e(item)}</li>' for j, item in enumerate(section.items))
+        sections[section.id] = (section.title, f'<ul>{items}</ul>' if items else '')
     parts = []
     for name in design.sections:
+        if name not in sections:
+            continue  # Older public snapshots can lack newly added private sections.
         title, content = sections[name]
         if content:
-            parts.append((name, f'<section class="section {name}"><h2>{icon("role" if name == "experience" else name)}<span>{title}</span></h2>{content}</section>'))
+            parts.append((name, f'<section class="section {name}"><h2>{icon("role" if name == "experience" or name.startswith('custom-') else name)}<span>{e(title)}</span></h2>{content}</section>'))
     split = design.template in ('modern', 'creative')
     if split:
         # Section order applies within each column; long experience stays in the main column.
-        main = ''.join(html for name, html in parts if name in ('summary', 'experience'))
+        main = ''.join(html for name, html in parts if name not in ('skills', 'education'))
         side = ''.join(html for name, html in parts if name in ('skills', 'education'))
         content = f'<div class="columns"><aside>{side}</aside><main>{main}</main></div>'
     else:
@@ -176,4 +185,4 @@ a {{ color:inherit; text-decoration:underline; text-underline-offset:2px; }}
 .portrait {{ width:var(--photo-size); height:var(--photo-size); border-radius:var(--photo-radius); }}
 @media screen and (max-width:480px) {{ .portrait {{ width:min(var(--photo-size),120px); height:min(var(--photo-size),120px); }} }}
 @media print {{ .portrait {{ width:{round(photo_size * .75)}px; height:{round(photo_size * .75)}px; }} }}
-</style></head><body class="{design.template}-document"><article class="resume {design.template}"><header><div class="identity">{image}<div class="identity-copy">{context}<h1>{e(contact.name or 'CV')}</h1>{subtitle}<p class="contact">{contacts}</p></div></div></header>{content}</article></body></html>'''
+</style></head><body class="{design.template}-document"><article class="resume {design.template}"><header><div class="identity">{image}<div class="identity-copy">{context}<h1 data-edit-path="contact.name">{e(contact.name or 'CV')}</h1>{subtitle}<p class="contact">{contacts}</p></div></div></header>{content}</article></body></html>'''

@@ -30,6 +30,7 @@ from app.auth import (
 )
 from app.config import MAX_JOB_CHARS, Settings, ensure_sqlite_parent, load_settings
 from app.cv_chat_routes import register_cv_chat
+from app.cv_editor_routes import register_cv_editor
 from app.database import Base, ensure_schema, make_engine, make_session_factory
 from app.models import Application, CV, CvPhoto, ProfileShare, User, utcnow
 from app.schemas import CvDocument, GapReport, Profile, ResumeDesign
@@ -120,6 +121,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         return row
 
     register_cv_chat(app, get_db, owned_application, model_client, _application_detail)
+    register_cv_editor(app, get_db, owned_application, model_client, _application_detail, lambda cv, **kw: _design_photo(cv, **kw))
     register_admin_routes(app, get_db)
 
     @app.get("/health")
@@ -459,30 +461,41 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
             body["application_id"] = share.application.id
         return body
 
-    def company_logo(document: dict, index: int):
+    def company_logo(document: dict, index: int, design=None):
         roles = document.get("experience") or []
         if index < 0 or index >= len(roles):
             raise HTTPException(status_code=404, detail="That employer was not found.")
-        logo = app.state.logos.lookup(roles[index].get("employer") or "")
+        employer = roles[index].get("employer") or ""
+        overrides = (design or {}).get('company_logos', {})
+        key = ' '.join(employer.lower().split())
+        if key in overrides:
+            return JSONResponse({'url': overrides[key] or None, 'source': 'upload'}, headers={'Cache-Control': 'private, no-store'})
+        logo = app.state.logos.lookup(employer)
         return JSONResponse(logo or {"url": None, "source": None}, headers={"Cache-Control": "private, no-store"})
 
     @app.get("/api/cvs/{cv_id}/logos/{index}")
-    def cv_logo(cv_id: int, index: int, request: Request, db: Session = Depends(get_db)):
+    def cv_logo(cv_id: int, index: int, request: Request, employer: str | None = None, db: Session = Depends(get_db)):
         user = require_user(request, db)
-        return company_logo(owned_cv(db, user, cv_id).profile_json, index)
+        profile = owned_cv(db, user, cv_id).profile_json
+        if employer is not None:
+            names = [role.get('employer', '') for role in profile.get('experience', [])]
+            if employer not in names:
+                return JSONResponse({'url': None, 'source': None}, headers={'Cache-Control': 'private, no-store'})
+            index = names.index(employer)
+        return company_logo(profile, index)
 
     @app.get("/api/applications/{application_id}/logos/{index}")
     def application_logo(application_id: int, index: int, request: Request, db: Session = Depends(get_db)):
         user = require_user(request, db)
         row = owned_application(db, user, application_id)
-        return company_logo(_employer_document(row), index)
+        return company_logo(_employer_document(row), index, row.result_json.get("design"))
 
     @app.get("/api/profiles/{token}/logos/{index}")
     def profile_logo(token: str, index: int, db: Session = Depends(get_db)):
         share = db.query(ProfileShare).filter(ProfileShare.token == token).one_or_none()
         if share is None:
             raise HTTPException(status_code=404, detail="That profile was not found.")
-        return company_logo(share.document_json or {}, index)
+        return company_logo(share.document_json or {}, index, share.application.result_json.get("design") if share.application else None)
 
     @app.get("/api/profiles/{token}/photo")
     def profile_photo(token: str, db: Session = Depends(get_db)):
@@ -548,6 +561,7 @@ def _employer_document(row: Application) -> dict:
         skills=profile.skills,
         experience=profile.experience,
         education=profile.education,
+        custom_sections=profile.custom_sections,
     ).model_dump()
 
 

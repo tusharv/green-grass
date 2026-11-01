@@ -123,6 +123,7 @@ def ground_tailored(profile: Profile, draft: TailoredDraft, fit: FitResult) -> C
         skills=ordered,
         experience=experience,
         education=list(profile.education),
+        custom_sections=list(profile.custom_sections),
     )
 
 

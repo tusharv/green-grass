@@ -86,8 +86,32 @@
     <circle cx="9.2" cy="8" r="2.8" />
     <path d="M4.2 19.2a5 5 0 0 1 10 0" />
     <path d="M17 7.6v5M14.5 10.1h5" />
+  {:else if name === 'edit'}
+    <path d="m15 4 5 5M4 20l4.5-1L20 7.5a2 2 0 0 0-3-3L5 16z"/>
+  {:else if name === 'palette'}
+    <path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1-3.7c-.8-.5-.4-1.8.5-1.8H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7" cy="10" r=".7"/><circle cx="10" cy="6.5" r=".7"/><circle cx="15" cy="7" r=".7"/>
+  {:else if name === 'eye' || name === 'eye-off'}
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>{#if name === 'eye-off'}<path d="m3 3 18 18"/>{/if}
+  {:else if name === 'plus'}<path d="M12 5v14M5 12h14"/>
+  {:else if name === 'close'}<path d="m6 6 12 12M6 18 18 6"/>
+  {:else if name === 'help'}<circle cx="12" cy="12" r="9"/><path d="M9.5 8a2.5 2.5 0 1 1 4 2c-1.5 1-1.5 1.5-1.5 3M12 16.5h.01"/>
+  {:else if name === 'grip'}<path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3"/>
+  {:else if name === 'up'}<path d="m6 14 6-6 6 6"/>
+  {:else if name === 'down'}<path d="m6 10 6 6 6-6"/>
+  {:else if name === 'back'}<path d="M20 12H4m6-6-6 6 6 6"/>
+  {:else if name === 'undo'}<path d="M4 10h10a6 6 0 0 1 0 12M4 10l5-5M4 10l5 5" transform="translate(0 -2)"/>
+  {:else if name === 'redo'}<path d="M20 10H10a6 6 0 0 0 0 12M20 10l-5-5M20 10l-5 5" transform="translate(0 -2)"/>
+  {:else if name === 'save'}<path d="M5 3h12l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8"/>
+  {:else if name === 'copy'}<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>
+  {:else if name === 'share'}<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>
+  {:else if name === 'lock'}<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>
+  {:else if name === 'folder'}<path d="M3 7V4h7l2 3h9v13H3z"/>
+  {:else if name === 'award'}<circle cx="12" cy="8" r="5"/><path d="m8 12-1 9 5-3 5 3-1-9"/>
+  {:else if name === 'language'}<path d="M3 5h12M9 3v2M5 5c0 6 5 9 8 10M12 5c0 6-5 9-9 10M13 21l4-10 4 10M14.5 17h5"/>
   {:else if name === 'user'}
     <circle cx="12" cy="8" r="3.1" />
     <path d="M5 19.2a7 7 0 0 1 14 0" />
   {/if}
 </svg>
+
+<style>.icon {flex-shrink:0;vertical-align:middle;}</style>

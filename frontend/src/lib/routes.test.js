@@ -26,3 +26,11 @@ test('private CV and application pages still require sign-in', () => {
 test('admin console requires sign-in and admin flag', () => {
   assert.deepEqual(matchRoute('/admin'), { name: 'admin', auth: true, admin: true });
 });
+
+test('CV editing has a dedicated signed-in route', () => {
+  assert.deepEqual(matchRoute('/applications/7/edit'), {name:'editor', auth:true, id:7});
+  assert.deepEqual(matchRoute('/applications/7'), {name:'result', auth:true, id:7});
+});
+test('old design links still open the standalone editor', () => {
+  assert.deepEqual(matchRoute('/applications/7?design=1'), {name:'editor', auth:true, id:7});
+});

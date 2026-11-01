@@ -1,4 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
+
+import re
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
@@ -25,6 +27,12 @@ class Education(BaseModel):
     year: str = ""
 
 
+class CustomSection(BaseModel):
+    id: str = Field(pattern=r'^custom-[a-z0-9-]{1,60}$')
+    title: str = Field(min_length=1, max_length=100)
+    items: list[Annotated[str, Field(max_length=4000)]] = Field(default_factory=list, max_length=50)
+
+
 class Profile(BaseModel):
     contact: Contact = Field(default_factory=Contact)
     summary: str = ""
@@ -32,6 +40,7 @@ class Profile(BaseModel):
     experience: list[Experience] = Field(default_factory=list)
     education: list[Education] = Field(default_factory=list)
     years_experience: float = 0
+    custom_sections: list[CustomSection] = Field(default_factory=list, max_length=20)
 
 
 class JobExtract(BaseModel):
@@ -82,6 +91,7 @@ class CvDocument(BaseModel):
     skills: list[str]
     experience: list[Experience]
     education: list[Education]
+    custom_sections: list[CustomSection] = Field(default_factory=list, max_length=20)
 
 
 class LearningResource(BaseModel):
@@ -123,12 +133,22 @@ class ResumeDesign(BaseModel):
     text_size: Literal['small', 'medium', 'large'] = 'medium'
     spacing: Literal['compact', 'comfortable', 'airy'] = 'comfortable'
     show_photo: bool = True
-    sections: list[Literal['summary', 'experience', 'skills', 'education']] = Field(
+    company_logos: dict[str, str] = Field(default_factory=dict)
+    sections: list[str] = Field(max_length=24,
         default_factory=lambda: ['summary', 'experience', 'skills', 'education'])
 
     @field_validator('sections')
     @classmethod
     def all_sections(cls, value):
-        if len(value) != 4 or len(set(value)) != 4:
-            raise ValueError('Include each section exactly once.')
+        if len(set(value)) != len(value):
+            raise ValueError('Include each section at most once.')
+        if any(name not in ('summary', 'experience', 'skills', 'education') and not re.fullmatch(r'custom-[a-z0-9-]{1,60}', name) for name in value):
+            raise ValueError('Unknown section.')
         return value
+
+
+    @field_validator('company_logos')
+    @classmethod
+    def safe_logos(cls, value):
+        from app.services.editor_images import validate_logos
+        return validate_logos(value)

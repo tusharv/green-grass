@@ -1,3 +1,5 @@
+import { clearEditorDrafts } from './editorDrafts.js';
+
 export const session = $state({
   user: null,
   impersonating: null,
@@ -27,7 +29,7 @@ export async function api(path, options = {}) {
     }
   }
   if (!response.ok) {
-    if (response.status === 401) session.user = null;
+    if (response.status === 401) { session.user = null; clearEditorDrafts(); }
     const detail = data && data.detail;
     const message = typeof detail === 'string' ? detail : 'Something went wrong. Try again.';
     const error = new Error(message);
@@ -39,6 +41,7 @@ export async function api(path, options = {}) {
 
 export async function loadSession() {
   const data = await api('/api/session');
+  if (session.user?.id !== data.user?.id) clearEditorDrafts();
   session.user = data.user;
   session.impersonating = data.impersonating || null;
   session.csrf = data.csrf;
@@ -47,6 +50,7 @@ export async function loadSession() {
 }
 
 export function applySessionUser(user, impersonating = null) {
+  if (session.user?.id !== user?.id) clearEditorDrafts();
   session.user = user;
   session.impersonating = impersonating;
 }

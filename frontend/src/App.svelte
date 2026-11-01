@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { hasEditorDrafts } from './lib/editorDrafts.js';
   import { followLink, locationState, navigate } from './lib/nav.svelte.js';
   import { matchRoute } from './lib/routes.js';
   import { api, applySessionUser, loadSession, session } from './lib/session.svelte.js';
@@ -15,6 +16,7 @@
   import CvDetail from './pages/CvDetail.svelte';
   import Apply from './pages/Apply.svelte';
   import Result from './pages/Result.svelte';
+  import CvEditor from './pages/CvEditor.svelte';
   import Profile from './pages/Profile.svelte';
   import Legal from './pages/Legal.svelte';
   import Admin from './pages/Admin.svelte';
@@ -61,6 +63,7 @@
   }
 
   async function signOut() {
+    if (hasEditorDrafts() && !window.confirm('Sign out and discard unsaved CV edits?')) return;
     try {
       await api('/api/logout', { method: 'POST' });
     } catch {
@@ -94,7 +97,7 @@
         : 'Job Ready'}</title>
 </svelte:head>
 
-<div class="frame" class:bare={route.name === 'profile' || route.name === 'sample-profile'} class:landing-frame={route.name === 'home' && !session.user}>
+<div class="frame" class:editor-frame={route.name === 'editor'} class:bare={route.name === 'profile' || route.name === 'sample-profile'} class:landing-frame={route.name === 'home' && !session.user}>
   {#if route.name !== 'profile' && route.name !== 'sample-profile'}
   <header class="bar">
     <a class="brand-link" href="/" onclick={(event) => followLink(event, '/')}>
@@ -166,8 +169,10 @@
       <CvDetail id={route.id} />
     {:else if route.name === 'apply'}
       <Apply cvId={route.cvId} />
+    {:else if route.name === 'editor'}
+      {#key route.id}<CvEditor id={route.id} />{/key}
     {:else if route.name === 'result'}
-      <Result id={route.id} />
+      {#key route.id}<Result id={route.id} />{/key}
     {:else if route.name === 'profile'}
       <Profile token={route.token} />
     {:else if route.name === 'sample-profile'}
@@ -184,7 +189,7 @@
       </section>
     {/if}
   </main>
-  {#if booted && route.name !== 'profile' && route.name !== 'sample-profile'}
+  {#if booted && route.name !== 'profile' && route.name !== 'sample-profile' && route.name !== 'editor'}
     <Credits quiet={route.name === 'home' && !session.user} />
   {/if}
 </div>

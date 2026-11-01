@@ -38,6 +38,9 @@ def document_html(document: CvDocument) -> str:
         )
         if line:
             schools.append(f"<p>{line}</p>")
+    custom_sections = ''.join(_section(section.title, '<ul>' + ''.join(
+        f'<li>{escape(item)}</li>' for item in section.items) + '</ul>', 'role')
+        for section in document.custom_sections if section.items)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -87,6 +90,7 @@ def document_html(document: CvDocument) -> str:
   {_section("Experience", "".join(roles), "role")}
   {_section("Skills", f"<p>{skills}</p>" if skills else "", "skills")}
   {_section("Education", "".join(schools), "education")}
+  {custom_sections}
 </body>
 </html>"""
 

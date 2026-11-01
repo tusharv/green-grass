@@ -1344,3 +1344,9 @@ button.danger:hover { background: #6e2d22; color: #fff; }
   .confirm-pop { width: 100%; }
   .confirm-actions .button { flex: 1; }
 }
+
+/* The CV editor is a workspace: its panels, rather than the entire page, scroll. */
+.frame.editor-frame {max-width:none;width:100%;height:100dvh;min-height:0;padding:0 24px 16px;overflow:hidden;}
+.editor-frame .bar {min-height:56px;flex-shrink:0;margin-bottom:0;}
+.frame.editor-frame main {display:flex;flex:1 1 0;min-height:0;}
+@media(max-width:800px) {.frame.editor-frame {padding:0 10px 10px;}.editor-frame .bar {min-height:50px;gap:8px;}.editor-frame .bar nav {gap:10px;}}

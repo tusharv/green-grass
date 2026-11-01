@@ -16,8 +16,11 @@ export function matchRoute(full) {
   let found = path.match(/^\/cvs\/(\d+)$/);
   if (found) return { name: 'cv', auth: true, id: Number(found[1]) };
 
+  found = path.match(/^\/applications\/(\d+)\/edit$/);
+  if (found) return { name: 'editor', auth: true, id: Number(found[1]) };
+
   found = path.match(/^\/applications\/(\d+)$/);
-  if (found) return { name: 'result', auth: true, id: Number(found[1]) };
+  if (found) return { name: url.searchParams.get('design') === '1' ? 'editor' : 'result', auth: true, id: Number(found[1]) };
 
   found = path.match(/^\/profiles\/([A-Za-z0-9_-]+)$/);
   if (found) return { name: 'profile', auth: false, token: found[1] };

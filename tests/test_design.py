@@ -29,7 +29,7 @@ def test_design_saved_without_changing_facts_or_shared_link(tmp_path):
     assert client.post(base+'/design',json=design,headers=_headers(_csrf(client))).status_code == 404
 
 
-@pytest.mark.parametrize('bad', [{'accent':'red;display:none'}, {'template':'unknown'}, {'sections':['skills']}, {'sections':['summary']*4}])
+@pytest.mark.parametrize('bad', [{'accent':'red;display:none'}, {'template':'unknown'}, {'sections':['unknown']}, {'sections':['summary']*4}])
 def test_design_rejects_invalid_settings(bad):
     with pytest.raises(ValidationError):
         ResumeDesign(**bad)

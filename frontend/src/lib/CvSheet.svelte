@@ -9,7 +9,7 @@
   const hasExperience = $derived(Boolean(document?.experience?.length));
   const hasSkills = $derived(Boolean(document?.skills?.length));
   const hasEducation = $derived(Boolean(document?.education?.length));
-  const hasMain = $derived(hasSummary || hasExperience);
+  const hasMain = $derived(hasSummary || hasExperience || Boolean(document?.custom_sections?.some(s => s.items.length)));
   const hasSide = $derived(hasSkills || hasEducation);
 
   function dates(role) {
@@ -68,7 +68,7 @@
     {#if contacts.length}
       <address>
         <ul class="contact-row">
-          {#each contacts as item (item.icon + item.label)}
+          {#each contacts as item, index (index)}
             <li>
               <span class="mark"><Icon name={item.icon} size={13} /></span>
               {#if item.href}
@@ -118,6 +118,9 @@
               {/each}
             </section>
           {/if}
+          {#each document.custom_sections || [] as section (section.id)}
+            {#if section.items.length}<section><h3><span class="mark"><Icon name="role" size={14}/></span> {section.title}</h3><ul>{#each section.items as item}<li>{item}</li>{/each}</ul></section>{/if}
+          {/each}
         </div>
       {/if}
       {#if hasSide}
@@ -126,7 +129,7 @@
             <section>
               <h3><span class="mark"><Icon name="skills" size={14} /></span> Skills</h3>
               <ul class="skills">
-                {#each document.skills as skill (skill)}
+                {#each document.skills as skill, index (index)}
                   <li>{skill}</li>
                 {/each}
               </ul>

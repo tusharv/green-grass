@@ -46,6 +46,18 @@ The application page can propose source-CV edits through private chat. `app/serv
 
 `app/cv_chat_routes.py` stores private conversations in `cv_conversations`, keyed by CV. POST chat only proposes edits. Explicit accuracy confirmation and `POST /api/applications/{id}/chat/apply` apply a server-stored proposal and run the existing pipeline. Keep source CV, assessment and optional shared snapshot changes atomic. Reject stale/replayed proposals using conversation revisions and source fingerprints; preserve saved design. Other applications keep previous assessments. Never expose chat through public profiles, and only refresh a shared snapshot when the user selects that option. Original extracted upload text remains unchanged.
 
+## Manual CV editor
+
+The dedicated `/applications/{id}/edit` page's **Design and edit your CV** editor allows direct human edits to contact details, summary, skills, experience, education, years and additional sections. This is separate from the narrower chat proposal flow; do not loosen chat evidence rules.
+
+- `app/cv_editor_routes.py` owns `/api/applications/{id}/editor` (GET/POST), `/editor/preview` and `/editor/logo`. Previews and logo uploads remain unsaved until the owner saves the editor.
+- Factual saves require explicit accuracy confirmation, rerun the existing role pipeline, preserve the human's wording, and atomically update the source CV and this assessment. Original extracted upload text and other assessments stay unchanged. Existing shared CV snapshots refresh only when selected.
+- Editor versions cover source, job and saved result. The shared conversation revision serializes manual and chat edits; manual factual saves invalidate pending chat proposals. Rejected or failed reassessments save nothing.
+- `Profile.custom_sections` are human-authored, copied unchanged into `CvDocument`, and never treated as work/skills-list evidence. Custom entries must survive every renderer, including the default PDF.
+- `ResumeDesign.sections` is an ordered subset of built-in/custom section IDs. Hiding a section preserves its source data and never changes fit. `company_logos` is keyed by normalized employer name, with metadata-free 256px PNG data URLs or an empty string to suppress automatic lookup. No remote logo URLs or uploaded originals are saved.
+- The role review links to the standalone editor; it does not embed it. Content and Design tabs stay fixed above a scrolling controls panel, beside an independently scrolling CV. Mobile switches between full-width tools and canvas.
+- Unsaved editor drafts are private in-memory state, scoped to the signed-in user. Never expose them in shared profiles or persist them in browser storage. Disable stale canvas edits during preview refresh so indexed fields cannot modify a different entry after reordering.
+
 ## Where things live
 
 - `app/main.py` — HTTP routes, ownership checks, session, and the built SPA
@@ -64,7 +76,7 @@ The application page can propose source-CV edits through private chat. `app/serv
 
 ## Routes
 
-Client: `/` desk, `/login`, `/register`, `/admin` (admins only), `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/profiles/{first}-{last}-{hash}` (no sign-in). The hash is 16 hex characters. A single name, or a name with no ASCII letters, uses that one word or `profile` before the hash.
+Client: `/` desk, `/login`, `/register`, `/admin` (admins only), `/cvs/new`, `/cvs/{id}`, `/apply?cv={id}`, `/applications/{id}`, `/applications/{id}/edit`, `/profiles/{first}-{last}-{hash}` (no sign-in). The hash is 16 hex characters. A single name, or a name with no ASCII letters, uses that one word or `profile` before the hash.
 
 API, all under the signed-in user except session, register, login, and the public profile:
 

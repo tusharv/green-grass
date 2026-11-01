@@ -160,7 +160,7 @@
 
 {#if profile?.application_id}
   <div class="profile-owner-actions">
-    <a class="customize-float" href="/applications/{profile.application_id}?design=1" aria-label="Customize design" title="Customize design"><Icon name="skills" size={23} /><span class="customize-label" aria-hidden="true">Customize design</span></a>
+    <a class="customize-float" href="/applications/{profile.application_id}/edit" aria-label="Customize design" title="Customize design"><Icon name="skills" size={23} /><span class="customize-label" aria-hidden="true">Customize design</span></a>
   </div>
 {/if}
 
