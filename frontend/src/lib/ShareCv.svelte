@@ -4,6 +4,7 @@
   import Icon from './Icon.svelte';
   import DesignDocument from './DesignDocument.svelte';
   import CvSheet from './CvSheet.svelte';
+  import Avatar from './Avatar.svelte';
   let { open = $bindable(false), row, dirty = false, busy = false, onpublished = () => {}, onreview = () => {} } = $props();
   let pending = $state(false);
   let loading = $state(false);
@@ -27,10 +28,11 @@
         const publicProfile = await api('/api' + current.share_path);
         next = {document:publicProfile.document, html:publicProfile.design_html, logosUrl:'/api' + current.share_path + '/logos'};
       } else if (current.result?.kind === 'cv') {
-        next = {document:current.result.document, html:current.design_html, logosUrl:`/api/applications/${current.id}/logos`};
+        const cv = current.design_html ? null : await api(`/api/cvs/${current.cv_id}`);
+        next = {document:current.result.document, photo:cv?.photo, html:current.design_html, logosUrl:`/api/applications/${current.id}/logos`};
       } else {
         const cv = await api(`/api/cvs/${current.cv_id}`);
-        next = {document:cv.profile,html:current.design_html,logosUrl:`/api/cvs/${current.cv_id}/logos`};
+        next = {document:cv.profile,photo:cv.photo,html:current.design_html,logosUrl:`/api/cvs/${current.cv_id}/logos`};
       }
       if (request === requestId) preview=next;
     } catch(err) {if (request === requestId) error=err.message;}
@@ -79,7 +81,8 @@
     <div class="preview-column"><p class="preview-heading"><Icon name="eye" size={15}/>{shareUrl ? 'What your link currently shows' : 'Saved profile preview'}</p><div class="share-preview">
       {#if loading}<p class="loading" role="status">Loading saved CV…</p>
       {:else if preview?.html}<DesignDocument html={preview.html} logosUrl={preview.logosUrl} title="Saved CV sharing preview"/>
-      {:else if preview?.document}<CvSheet document={preview.document} logosUrl={preview.logosUrl}/>
+      {:else if preview?.document && shareUrl}<iframe class="public-preview" src={row.share_path} title="Current shared profile preview"></iframe>
+      {:else if preview?.document}{#if preview.photo?.url}<div class="preview-photo"><Avatar name={row.candidate_name} url={preview.photo.url}/><span>Profile photo included in your shared CV</span></div>{/if}<CvSheet document={preview.document} logosUrl={preview.logosUrl}/>
       {:else}<p class="loading">Preview unavailable. <button type="button" onclick={() => loadPreview(row)}>Try again</button></p>{/if}
     </div></div>
   </div>
@@ -92,6 +95,6 @@
   .primary,.secondary {display:flex;justify-content:center;align-items:center;gap:8px;min-height:42px;border-radius:7px;padding:10px 14px;font-size:13px;text-decoration:none;}.primary {background:#245747;color:white;border:1px solid #245747;}.secondary {background:white;color:#245747;border:1px solid #cedcd2;}.primary:disabled {opacity:.5;}
   .small,.pdf-note {font-size:11px;line-height:1.6;color:var(--muted);margin:0;}.pdf-note {display:flex;gap:8px;}.manage {font-size:11px;color:#45694f;margin-top:4px;}
   .draft-warning {display:flex;gap:9px;padding:12px;background:#fff6e7;border:1px solid #ecd7ae;border-radius:8px;color:#745123;}.draft-warning strong {font-size:13px;}.draft-warning p {font-size:12px;line-height:1.5;margin:5px 0;}.draft-warning button {min-height:30px;padding:5px 0;background:transparent;color:#745123;font-size:12px;border:0;text-decoration:underline;}
-  .preview-column {min-width:0;}.preview-heading {display:flex;align-items:center;gap:8px;font-size:12px;color:#52675a;margin:0 0 10px;}.share-preview {max-height:62dvh;overflow:auto;border:1px solid #dce5df;border-radius:7px;background:#f0f4f1;}.loading {padding:30px;font-size:13px;text-align:center;}
+  .preview-photo {display:flex;align-items:center;gap:12px;padding:16px;background:white;font-size:12px;color:var(--muted);}.public-preview {display:block;width:100%;height:60dvh;border:0;background:white;}.preview-column {min-width:0;}.preview-heading {display:flex;align-items:center;gap:8px;font-size:12px;color:#52675a;margin:0 0 10px;}.share-preview {max-height:62dvh;overflow:auto;border:1px solid #dce5df;border-radius:7px;background:#f0f4f1;}.loading {padding:30px;font-size:13px;text-align:center;}
   @media(max-width:720px) {.share-layout {grid-template-columns:1fr;gap:20px;}.share-preview {max-height:45dvh;}}
 </style>

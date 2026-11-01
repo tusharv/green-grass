@@ -55,7 +55,7 @@
 
   function onMainClick(event) {
     const link = event.target instanceof Element ? event.target.closest('a') : null;
-    if (!link || !link.href) return;
+    if (!link || !link.href || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
     const url = new URL(link.href, location.origin);
     if (url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
     if (url.hash && url.pathname === location.pathname && url.search === location.search) return;
