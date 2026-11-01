@@ -1,8 +1,11 @@
 FROM node:22-bookworm-slim AS frontend
-WORKDIR /src
+# DesignPanel imports the shared CV backgrounds from ../app, so this stage
+# has to keep the repo layout instead of flattening frontend/ to /src.
+WORKDIR /repo/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
+COPY app/services/assets/cv-backgrounds/ /repo/app/services/assets/cv-backgrounds/
 RUN npm run build
 
 FROM python:3.12-slim-bookworm
@@ -24,7 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY presentation ./presentation
-COPY --from=frontend /src/dist ./frontend/dist
+COPY --from=frontend /repo/frontend/dist ./frontend/dist
 
 RUN useradd --create-home --uid 10001 appuser \
     && chown -R appuser:appuser /app
